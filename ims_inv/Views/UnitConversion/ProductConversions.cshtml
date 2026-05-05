@@ -1,0 +1,199 @@
+@model ims_inv.Controllers.ProductUnitConversionViewModel
+@{
+    ViewData["Title"] = $"Unit Conversions - {Model.ProductName}";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="bi bi-arrow-left-right me-2"></i>Unit Conversions
+    </h1>
+    <a asp-action="Create" asp-route-productId="@Model.ProductId" class="btn btn-sm btn-primary shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i>Add Conversion
+    </a>
+</div>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">Products</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Unit Conversions</li>
+    </ol>
+</nav>
+
+<!-- Alert Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Product Info Card -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Product Information</div>
+                <div class="h6 mb-0 font-weight-bold text-gray-800">
+                    @Model.ProductName
+                    <br />
+                    <small class="text-muted">SKU: @Model.ProductSKU</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Base Unit</div>
+                <div class="h6 mb-0 font-weight-bold text-gray-800">
+                    @Model.BaseUnitName
+                    <span class="badge bg-info">@Model.BaseUnitSymbol</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conversions Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="bi bi-table me-2"></i>Unit Conversion Matrix
+        </h6>
+        <span class="badge bg-secondary">@Model.Conversions.Count Conversions</span>
+    </div>
+    <div class="card-body">
+        @if (Model.Conversions.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>From Unit</th>
+                            <th>To Unit</th>
+                            <th>Conversion Factor</th>
+                            <th>Formula Example</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var conversion in Model.Conversions)
+                        {
+                            var example = $"1 {conversion.FromUnitSymbol} = {conversion.ConversionFactor} {conversion.ToUnitSymbol}";
+                            <tr>
+                                <td>
+                                    <strong>@conversion.FromUnitName</strong>
+                                    <br />
+                                    <small class="text-muted">@conversion.FromUnitSymbol</small>
+                                </td>
+                                <td>
+                                    <strong>@conversion.ToUnitName</strong>
+                                    <br />
+                                    <small class="text-muted">@conversion.ToUnitSymbol</small>
+                                </td>
+                                <td>
+                                    <code>@conversion.ConversionFactor</code>
+                                </td>
+                                <td>
+                                    <small class="text-muted">@example</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-action="Edit" asp-route-conversionId="@conversion.Id" 
+                                           asp-route-productId="@Model.ProductId" 
+                                           class="btn btn-outline-warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-conversionId="@conversion.Id" 
+                                              asp-route-productId="@Model.ProductId" 
+                                              method="post" style="display: inline;" 
+                                              onsubmit="return confirm('Are you sure you want to delete this conversion?');">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                No conversions defined yet for this product.
+                <a asp-action="Create" asp-route-productId="@Model.ProductId" class="alert-link">
+                    Create the first one →
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Helpful Information -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-question-circle me-2"></i>How Unit Conversions Work
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Conversion Factor:</strong> The multiplier to convert FROM the base unit TO the target unit.</p>
+                
+                <div class="bg-light p-3 rounded mb-3">
+                    <strong>Example:</strong>
+                    <ul class="mb-0">
+                        <li>Base Unit: <strong>kg</strong></li>
+                        <li>Target Unit: <strong>grams</strong></li>
+                        <li>Conversion Factor: <strong>1000</strong></li>
+                        <li>Formula: 1 kg × 1000 = 1000 grams</li>
+                    </ul>
+                </div>
+
+                <h6 class="mt-4">Common Conversion Factors:</h6>
+                <ul>
+                    <li><strong>kg ↔ grams:</strong> 1000</li>
+                    <li><strong>L ↔ ml:</strong> 1000</li>
+                    <li><strong>dozen ↔ pieces:</strong> 12</li>
+                    <li><strong>kg ↔ boxes (500g/box):</strong> 2</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-info-circle me-2"></i>Tips
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-check-circle text-success me-2"></i> <strong>Base Unit:</strong> All inventory is stored in the base unit</li>
+                    <li><i class="bi bi-check-circle text-success me-2"></i> <strong>Conversions:</strong> Define how to convert to other units</li>
+                    <li><i class="bi bi-check-circle text-success me-2"></i> <strong>Decimal Support:</strong> Use decimals for fractional conversions (e.g., 0.5)</li>
+                    <li><i class="bi bi-check-circle text-success me-2"></i> <strong>One-way:</strong> Each conversion is one-directional</li>
+                    <li><i class="bi bi-check-circle text-success me-2"></i> <strong>Unique:</strong> Only one conversion per from-to pair</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

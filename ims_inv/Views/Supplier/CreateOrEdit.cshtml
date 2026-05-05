@@ -1,0 +1,92 @@
+@model ims_inv.Models.SupplierViewModel
+@{
+    ViewData["Title"] = (Model.Id == 0 ? "Create" : "Edit") + " Supplier";
+    ViewData["ActivePage"] = "Supplier";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">@ViewData["Title"]</h1>
+    <a asp-action="Index" class="btn btn-sm btn-secondary shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Supplier Details</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreateOrEdit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Name" class="form-label">Supplier Name</label>
+                            <input asp-for="Name" class="form-control" placeholder="e.g. Acme Corp" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ContactPerson" class="form-label">Contact Person</label>
+                            <input asp-for="ContactPerson" class="form-control" placeholder="e.g. John Doe" />
+                            <span asp-validation-for="ContactPerson" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Address" class="form-label">Office Address</label>
+                        <textarea asp-for="Address" class="form-control" rows="2" placeholder="Street, City, Country" required></textarea>
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Email" class="form-label">Contact Email</label>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="supplier@example.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Phone" class="form-label">Contact Phone</label>
+                            <input asp-for="Phone" class="form-control" placeholder="+880..." />
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="IsActive">
+                            <label class="form-check-label" asp-for="IsActive">Active Status</label>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i> @(Model.Id == 0 ? "Save Supplier" : "Update Supplier")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4 border-left-info">
+            <div class="card-body">
+                <h5 class="text-info"><i class="bi bi-info-circle me-2"></i> Quick Tips</h5>
+                <p class="small text-muted mt-3">
+                    - Keep supplier contact details updated for seamless communication.<br /><br />
+                    - Verify the email address for automated purchase orders.<br /><br />
+                    - Use the active status to filter out old or paused suppliers.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

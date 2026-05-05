@@ -1,0 +1,222 @@
+@model ims_inv.Models.CreateStockMovementViewModel
+@{
+    ViewData["Title"] = "New Stock Entry";
+    ViewData["ActivePage"] = "StockEntry";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">New Stock Entry</h1>
+    <a asp-action="Index" class="btn btn-sm btn-secondary shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to History
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Record Transaction</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Update" method="post" id="stockForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label d-block">Movement Type</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="MovementType" id="typeIn" value="IN" checked>
+                                <label class="btn btn-outline-success" for="typeIn"><i class="bi bi-arrow-down-left me-2"></i>Stock IN (Received)</label>
+
+                                <input type="radio" class="btn-check" name="MovementType" id="typeOut" value="OUT">
+                                <label class="btn btn-outline-danger" for="typeOut"><i class="bi bi-arrow-up-right me-2"></i>Stock OUT (Issued)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="ProductId" class="form-label">Product</label>
+                            <select id="ProductId" name="ProductId" class="form-select" asp-items="ViewBag.productId" required onchange="updateProductInfo()">
+                                <option value="">-- Select Product --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="WarehouseId" class="form-label">Warehouse</label>
+                            <select id="WarehouseId" name="WarehouseId" class="form-select" asp-items="ViewBag.warehouseId" required>
+                                <option value="">-- Select Warehouse --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="Quantity" class="form-label">Quantity <span class="text-muted" id="entryUnitLabel">(in units)</span></label>
+                            <input type="number" id="Quantity" name="Quantity" class="form-control" min="0.01" step="0.01" required placeholder="Enter quantity" onchange="convertQuantity()" />
+                            <small class="text-muted mt-1 d-block">
+                                Will be converted to: <strong id="baseUnitPreview">-</strong>
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="EntryUnitId" class="form-label">Unit</label>
+                            <select id="EntryUnitId" name="EntryUnitId" class="form-select" onchange="convertQuantity()" disabled>
+                                <option value="">-- Select Unit --</option>
+                            </select>
+                            <small class="text-muted mt-1 d-block" id="baseUnitInfo">Select a product first</small>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="ReferenceNumber" class="form-label">Reference #</label>
+                            <input type="text" id="ReferenceNumber" name="ReferenceNumber" class="form-control" placeholder="e.g. PO-1023 or INV-55" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Reason" class="form-label">Reason / Category</label>
+                        <select id="Reason" name="Reason" class="form-select" required>
+                            <option value="">-- Select Reason --</option>
+                            <optgroup label="Stock IN Reasons">
+                                <option value="Purchase">Purchase</option>
+                                <option value="Return">Customer Return</option>
+                                <option value="Opening">Opening Stock</option>
+                                <option value="Adjustment">Adjustment (Surplus)</option>
+                            </optgroup>
+                            <optgroup label="Stock OUT Reasons">
+                                <option value="Sales">Sales</option>
+                                <option value="Damage">Damage/Expired</option>
+                                <option value="Loss">Loss/Theft</option>
+                                <option value="Internal">Internal Use</option>
+                                <option value="Adjustment">Adjustment (Shortage)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Notes" class="form-label">Notes</label>
+                        <textarea id="Notes" name="Notes" class="form-control" rows="2" placeholder="Optional internal comments..."></textarea>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary px-5">
+                            <i class="bi bi-check-circle me-1"></i> Submit Entry
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow mb-4 border-left-info">
+            <div class="card-body">
+                <h5 class="text-info"><i class="bi bi-info-circle me-2"></i> Guidance</h5>
+                <ul class="small text-muted mt-3">
+                    <li><strong>Stock IN:</strong> Increases the quantity in the selected warehouse. Use for purchases or returns.</li>
+                    <li class="mt-2"><strong>Stock OUT:</strong> Decreases the quantity. Use for sales, damages, or shrinkage.</li>
+                    <li class="mt-2"><strong>Reference #:</strong> Use this to link the transaction to physical paperwork like a bill or delivery note.</li>
+                    <li class="mt-2"><strong>Unit Conversion:</strong> Enter quantity in any unit. It will be automatically converted and stored in the product's base unit.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow border-left-success">
+            <div class="card-header bg-light py-3">
+                <h6 class="m-0 text-success"><i class="bi bi-calculator me-2"></i> Conversion Info</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2"><strong>Product Base Unit:</strong> <span id="productBaseUnit" class="badge bg-primary">-</span></p>
+                <p class="small mb-2"><strong>Entry Unit:</strong> <span id="entryUnit" class="badge bg-secondary">-</span></p>
+                <p class="small mb-0"><strong>Conversion Factor:</strong> <span id="conversionFactor" class="text-muted">-</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let productsData = {};
+    let unitsData = {};
+
+    // Initialize data on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        // No need to preload products here - data is fetched on demand via API
+    });
+
+    function updateProductInfo() {
+        const productId = document.getElementById('ProductId').value;
+        const unitSelect = document.getElementById('EntryUnitId');
+        const baseUnitLabel = document.getElementById('baseUnitInfo');
+        const productBaseUnit = document.getElementById('productBaseUnit');
+
+        if (!productId) {
+            baseUnitLabel.textContent = 'Select a product first';
+            productBaseUnit.textContent = '-';
+            unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+            unitSelect.disabled = true;
+            return;
+        }
+
+        fetch(`/api/products/${productId}`)
+            .then(r => r.json())
+            .then(data => {
+                productBaseUnit.textContent = data.baseUnitName;
+                baseUnitLabel.innerHTML = `Base unit: <strong>${data.baseUnitName}</strong>. Choose entry unit:`;
+            });
+
+        fetch(`/StockMovement/GetUnitConversionsByProductId?productId=${productId}`)
+            .then(r => r.json())
+            .then(res => {
+                const units = res.data;
+                unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+
+                units.forEach(u => {
+                    const option = document.createElement('option');
+                    option.value = u.unitId;
+                    option.textContent = u.unitName;
+                    unitSelect.appendChild(option);
+                });
+
+                unitSelect.disabled = false;
+            })
+    }
+
+    function convertQuantity() {
+        const quantity = parseFloat(document.getElementById('Quantity').value) || 0;
+        const productId = document.getElementById('ProductId').value;
+        const entryUnitId = document.getElementById('EntryUnitId').value;
+        const entryUnit = document.getElementById('entryUnit');
+        const conversionInfo = document.getElementById('conversionFactor');
+        const baseUnitPreview = document.getElementById('baseUnitPreview');
+        const entryUnitLabel = document.getElementById('entryUnitLabel');
+
+        if (!productId || !entryUnitId || quantity <= 0) {
+            baseUnitPreview.textContent = '-';
+            entryUnit.textContent = '-';
+            conversionInfo.textContent = '-';
+            return;
+        }
+
+        // Get selected unit name
+        const unitOption = document.querySelector(`#EntryUnitId option[value="${entryUnitId}"]`);
+        const unitName = unitOption ? unitOption.textContent : 'Unknown';
+        entryUnit.textContent = unitName;
+        entryUnitLabel.textContent = `(in ${unitName})`;
+
+        // Call API to convert
+        fetch(`/api/products/${productId}/convert?fromUnitId=${entryUnitId}&quantity=${quantity}`)
+            .then(r => r.json())
+            .then(data => {
+                baseUnitPreview.textContent = `${data.convertedQuantity.toFixed(2)} ${data.baseUnitName}`;
+                conversionInfo.textContent = `1 ${unitName} = ${data.conversionFactor.toFixed(4)} ${data.baseUnitName}`;
+            })
+            .catch(e => {
+                console.error('Error converting:', e);
+                baseUnitPreview.textContent = quantity + ' (conversion unavailable)';
+                conversionInfo.textContent = 'Error loading conversion';
+            });
+    }
+</script>
+

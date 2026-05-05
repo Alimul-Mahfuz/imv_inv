@@ -1,0 +1,121 @@
+@model ims_inv.Models.ProductViewModel
+
+@{
+    ViewData["Title"] = (Model?.Id == 0 ? "Create" : "Edit") + " Product";
+    ViewData["ActivePage"] = "Product";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">@ViewData["Title"]</h1>
+    <a asp-action="Index" class="btn btn-sm btn-secondary shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Product Information</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreateOrEdit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label asp-for="Name" class="form-label">Product Name</label>
+                            <input asp-for="Name" class="form-control" placeholder="e.g. Wireless Mouse" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="SKU" class="form-label">SKU / Code</label>
+                            <input asp-for="SKU" class="form-control" placeholder="e.g. WM-001" />
+                            <span asp-validation-for="SKU" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="CategoryId" class="form-label">Category</label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId">
+                                <option value="">-- Select Category --</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SupplierId" class="form-label">Supplier</label>
+                            <select asp-for="SupplierId" class="form-select" asp-items="ViewBag.SupplierId">
+                                <option value="">-- Select Supplier --</option>
+                            </select>
+                            <span asp-validation-for="SupplierId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="BaseUnitId" class="form-label">Base Unit</label>
+                        <select asp-for="BaseUnitId" class="form-select" asp-items="ViewBag.BaseUnitId">
+                            <option value="">-- Select Unit --</option>
+                        </select>
+                        <span asp-validation-for="BaseUnitId" class="text-danger"></span>
+                        <div class="form-text">The default unit of measurement for this product.</div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary px-5">
+                            <i class="bi bi-save me-1"></i> @(Model?.Id == 0 ? "Save Product" : "Update Product")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4 border-left-primary">
+            <div class="card-body">
+                <h5 class="text-primary"><i class="bi bi-info-circle me-2"></i> Product Tips</h5>
+                <p class="small text-muted mt-3">
+                    - **Product Name**: Use clear, descriptive names for your items.<br /><br />
+                    - **SKU**: Stock Keeping Unit should be unique for every product to help in tracking inventory accurately.<br /><br />
+                    - **Category**: Helps in grouping products for better reporting and filtering.<br /><br />
+                    - **Units**: Ensure you select the correct base unit (e.g., Pcs, Kg, Box) as it will affect stock calculations.
+                </p>
+            </div>
+        </div>
+
+        @if (Model?.Id > 0)
+        {
+            <div class="card shadow mb-4 border-left-success">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="bi bi-arrow-left-right me-2"></i>Unit Conversions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">Manage unit conversions for this product. Convert between different measurement units.</p>
+                    <a asp-controller="UnitConversion" asp-action="ProductConversions" 
+                       asp-route-productId="@Model.Id" class="btn btn-success w-100">
+                        <i class="bi bi-arrow-left-right me-2"></i>Manage Conversions
+                    </a>
+                </div>
+            </div>
+        }
+
+        <div class="card shadow mb-4 border-left-warning">
+            <div class="card-body">
+                <h5 class="text-warning"><i class="bi bi-exclamation-triangle me-2"></i> Important</h5>
+                <p class="small text-muted mt-3">
+                    Changing the **Base Unit** of a product after it has stock movements can lead to inconsistent inventory reporting.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

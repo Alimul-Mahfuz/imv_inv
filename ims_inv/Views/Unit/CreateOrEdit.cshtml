@@ -1,0 +1,79 @@
+@model ims_inv.Models.UnitViewModel
+@{
+    ViewData["Title"] = (Model.Id == 0 ? "Create" : "Edit") + " Unit";
+    ViewData["ActivePage"] = "Unit";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">@ViewData["Title"]</h1>
+    <a asp-action="Index" class="btn btn-sm btn-secondary shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Unit Details</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreateOrEdit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Unit Name</label>
+                        <input asp-for="Name" class="form-control" placeholder="e.g. Kilogram, Piece, Liter" required />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Symbol" class="form-label">Symbol</label>
+                            <input asp-for="Symbol" class="form-control" placeholder="e.g. kg, pcs, L" required />
+                            <span asp-validation-for="Symbol" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Type" class="form-label">Type</label>
+                            <select asp-for="Type" class="form-select" required>
+                                <option value="">-- Select Type --</option>
+                                <option value="weight">Weight</option>
+                                <option value="count">Count (Piece)</option>
+                                <option value="volume">Volume</option>
+                                <option value="length">Length</option>
+                                <option value="area">Area</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <span asp-validation-for="Type" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i> @(Model.Id == 0 ? "Save Unit" : "Update Unit")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4 border-left-info">
+            <div class="card-body">
+                <h5 class="text-info"><i class="bi bi-info-circle me-2"></i> Quick Tips</h5>
+                <p class="small text-muted mt-3">
+                    - **Standard Symbols**: Use standard abbreviations like 'kg' for Kilogram or 'L' for Liter.<br /><br />
+                    - **Unit Type**: Categorizing units helps in future reporting and calculations (e.g., total weight of stock).
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

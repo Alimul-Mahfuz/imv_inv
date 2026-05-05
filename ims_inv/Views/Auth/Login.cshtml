@@ -1,0 +1,170 @@
+@model ims_inv.Models.LoginViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In - IMS</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+        }
+
+        .login-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .login-header {
+            padding: 30px 40px 20px;
+            text-align: left;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .login-header h2 {
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-header h2 i {
+            color: #667eea;
+            margin-right: 12px;
+        }
+
+        .login-body {
+            padding: 20px 40px 35px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 11px 15px;
+            border: 1px solid #dee2e6;
+            font-size: 0.95rem;
+            background-color: #fff;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-login {
+            background: #212529;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn-login:hover {
+            background: #000;
+            color: white;
+        }
+
+        .forgot-password {
+            display: block;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .forgot-password:hover {
+            color: #667eea;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 25px;
+            color: #adb5bd;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h2><i class="bi bi-box-seam"></i> IMS</h2>
+            </div>
+            <div class="login-body">
+                <form method="post" asp-action="DoLogin" asp-controller="Auth" novalidate>
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger py-2 small mb-4 border-0" style="border-radius: 8px; background-color: #fff5f5; color: #c53030;">
+                            @Html.ValidationSummary(true, "", new { @class = "mb-0 list-unstyled fw-bold" })
+                        </div>
+                    }
+
+                    <div class="mb-4">
+                        <label asp-for="Email" class="form-label">Email Address</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="name@company.com" required />
+                        <span asp-validation-for="Email" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" required />
+                        <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-login">
+                        Sign In
+                    </button>
+
+                    <a href="#" class="forgot-password">Forgot your password?</a>
+                </form>
+            </div>
+        </div>
+        <div class="footer-text">
+            &copy; @DateTime.Now.Year Inventory Management System
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

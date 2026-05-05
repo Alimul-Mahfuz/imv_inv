@@ -1,0 +1,227 @@
+@model ims_inv.Controllers.CreateUnitConversionViewModel
+@{
+    ViewData["Title"] = $"Add Unit Conversion - {Model.ProductName}";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="bi bi-plus-circle me-2"></i>Add Unit Conversion
+    </h1>
+</div>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">Products</a></li>
+        <li class="breadcrumb-item">
+            <a asp-action="ProductConversions" asp-route-productId="@Model.ProductId">Unit Conversions</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Add Conversion</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Product Info Card -->
+        <div class="card shadow mb-4 border-left-primary">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted text-uppercase mb-2">Product</h6>
+                        <h4 class="mb-1">@Model.ProductName</h4>
+                        <small class="text-muted">Base Unit: <strong>@Model.BaseUnitName (@Model.BaseUnitName)</strong></small>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Note:</strong> All conversions are FROM the base unit (@Model.BaseUnitName)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Form -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Define Conversion</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" asp-route-productId="@Model.ProductId" method="post">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error!</strong> Please fix the errors below.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <!-- From Unit (Read-only) -->
+                    <div class="mb-3">
+                        <label for="baseUnit" class="form-label">
+                            <i class="bi bi-arrow-left me-2 text-primary"></i>
+                            <strong>From Unit (Base Unit)</strong>
+                        </label>
+                        <input type="text" class="form-control" id="baseUnit" 
+                               value="@Model.BaseUnitName" disabled>
+                        <small class="text-muted d-block mt-2">
+                            This is your product's base unit. All inventory is stored in this unit.
+                        </small>
+                    </div>
+
+                    <!-- To Unit -->
+                    <div class="mb-3">
+                        <label asp-for="TargetUnitId" class="form-label">
+                            <i class="bi bi-arrow-right me-2 text-success"></i>
+                            <strong asp-for="TargetUnitId"></strong>
+                        </label>
+                        <select asp-for="TargetUnitId" class="form-select form-select-lg">
+                            <option value="">-- Select a target unit --</option>
+                            @foreach (var unit in Model.AvailableUnits)
+                            {
+                                <option value="@unit.Id">
+                                    @unit.Name (@unit.Symbol) - @unit.Type
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="TargetUnitId" class="text-danger d-block mt-2"></span>
+                        <small class="text-muted d-block mt-2">
+                            Choose which unit you want to convert @Model.BaseUnitName to.
+                        </small>
+                    </div>
+
+                    <!-- Conversion Factor -->
+                    <div class="mb-4">
+                        <label asp-for="ConversionFactor" class="form-label">
+                            <i class="bi bi-calculator me-2 text-info"></i>
+                            <strong asp-for="ConversionFactor"></strong>
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">1 @Model.BaseUnitName =</span>
+                            <input asp-for="ConversionFactor" class="form-control" 
+                                   type="number" step="0.0001" placeholder="Enter conversion factor"
+                                   aria-describedby="factorHelp">
+                            <span class="input-group-text" id="targetUnitDisplay">target unit</span>
+                        </div>
+                        <span asp-validation-for="ConversionFactor" class="text-danger d-block mt-2"></span>
+                        <div id="factorHelp" class="form-text mt-3">
+                            <strong>Examples:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>1 kg = <strong>1000</strong> grams</li>
+                                <li>1 liter = <strong>1000</strong> milliliters</li>
+                                <li>1 dozen = <strong>12</strong> pieces</li>
+                                <li>1 kg = <strong>2</strong> boxes (if 1 box = 500g)</li>
+                                <li>1 kg = <strong>0.5</strong> sacks (if 1 sack = 2kg)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="alert alert-light border" id="previewBox">
+                        <strong>Preview:</strong>
+                        <div id="previewText" class="mt-2">
+                            <small class="text-muted">Enter the factor above to see the conversion preview</small>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a asp-action="ProductConversions" asp-route-productId="@Model.ProductId" 
+                           class="btn btn-secondary btn-lg">
+                            <i class="bi bi-arrow-left me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Create Conversion
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-lightbulb me-2"></i>Understanding Conversion Factors
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6>Formula:</h6>
+                <div class="bg-light p-3 rounded mb-3">
+                    <code>1 Base Unit × Conversion Factor = Amount in Target Unit</code>
+                </div>
+
+                <h6>Examples:</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded mb-3">
+                            <strong>Weight Example:</strong>
+                            <ul class="mb-0 mt-2" style="font-size: 0.9rem;">
+                                <li>Base: 1 kg</li>
+                                <li>Target: grams</li>
+                                <li>Factor: 1000</li>
+                                <li>Result: 1 kg × 1000 = 1000g</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded mb-3">
+                            <strong>Volume Example:</strong>
+                            <ul class="mb-0 mt-2" style="font-size: 0.9rem;">
+                                <li>Base: 1 liter</li>
+                                <li>Target: milliliters</li>
+                                <li>Factor: 1000</li>
+                                <li>Result: 1L × 1000 = 1000ml</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="mt-4">Key Points:</h6>
+                <ul>
+                    <li>✓ Use whole numbers for simple conversions (e.g., 1000, 12, 24)</li>
+                    <li>✓ Use decimals for fractional conversions (e.g., 0.5, 2.5)</li>
+                    <li>✓ Factor must be positive (0.0001 to 999999.9999)</li>
+                    <li>✓ Each conversion can only be defined once</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Update preview as user types the conversion factor
+        document.getElementById('ConversionFactor').addEventListener('input', function() {
+            const factor = this.value;
+            const baseUnit = '@Model.BaseUnitName';
+            const targetSelect = document.getElementById('TargetUnitId');
+            const targetOption = targetSelect.options[targetSelect.selectedIndex];
+            const targetUnit = targetOption.text.split('(')[1]?.split(')')[0] || 'target unit';
+
+            const previewText = document.getElementById('previewText');
+            if (factor) {
+                previewText.innerHTML = `1 ${baseUnit} × ${factor} = <strong>${factor} ${targetUnit}</strong>`;
+            } else {
+                previewText.innerHTML = '<small class="text-muted">Enter the factor above to see the conversion preview</small>';
+            }
+        });
+
+        // Update preview when target unit changes
+        document.getElementById('TargetUnitId').addEventListener('change', function() {
+            const factor = document.getElementById('ConversionFactor').value;
+            const baseUnit = '@Model.BaseUnitName';
+            const targetOption = this.options[this.selectedIndex];
+            const targetUnit = targetOption.text.split('(')[1]?.split(')')[0] || 'target unit';
+
+            const previewText = document.getElementById('previewText');
+            if (factor && this.value) {
+                previewText.innerHTML = `1 ${baseUnit} × ${factor} = <strong>${factor} ${targetUnit}</strong>`;
+            } else if (this.value) {
+                previewText.innerHTML = '<small class="text-muted">Enter the factor above to see the conversion preview</small>';
+            } else {
+                previewText.innerHTML = '<small class="text-muted">Select a target unit and enter the conversion factor</small>';
+            }
+        });
+    </script>
+}
