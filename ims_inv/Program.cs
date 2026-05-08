@@ -24,7 +24,7 @@ builder.Services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, UserObserve
 
 builder.Services.AddDbContext<WebAppDbContext>((sp, options) =>
 {
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
 });
 
