@@ -5,6 +5,14 @@ using ims_inv.Services;
 using ims_inv.Interceptors;
 using ims_inv.Observers;
 using ims_inv.Events;
+using ims_inv.Repositories;
+using ims_inv.Commands;
+
+// Check if running as CLI command
+if (await CommandServiceExtensions.TryRunCommandAsync(args))
+{
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +27,9 @@ builder.Services.AddDbContext<WebAppDbContext>((sp, options) =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
 });
+
+// Register repositories
+builder.Services.AddScoped<UserRepository>();
 
 builder.Services.AddAuthentication("CookieAuth")
     .AddCookie("CookieAuth", options =>
