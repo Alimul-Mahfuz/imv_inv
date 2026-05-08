@@ -1,0 +1,37 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+apphost.exe
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+packages/
+
+# Temporary files
+*.log
+*.tmp
