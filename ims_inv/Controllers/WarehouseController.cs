@@ -1,18 +1,19 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ims_inv.Data;
 using ims_inv.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using X.PagedList.Extensions;
 
 namespace ims_inv.Controllers
 {
     [Authorize]
     public class WarehouseController(WebAppDbContext _dbContext) : Controller
     {
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             ViewData["ActivePage"] = "Warehouse";
-            var warehouses = await _dbContext.Warehouses.ToListAsync();
+            var pageSize = 10;
+            var warehouses = _dbContext.Warehouses.OrderByDescending(x => x.Id).ToPagedList(page, pageSize);
             return View(warehouses);
         }
 

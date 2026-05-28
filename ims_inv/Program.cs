@@ -1,12 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+using ims_inv.Commands;
 using ims_inv.Data;
 using ims_inv.Helper;
-using ims_inv.Services;
-using ims_inv.Interceptors;
-using ims_inv.Observers;
-using ims_inv.Events;
 using ims_inv.Repositories;
-using ims_inv.Commands;
+using ims_inv.Services;
+using Microsoft.EntityFrameworkCore;
 
 // Check if running as CLI command
 if (await CommandServiceExtensions.TryRunCommandAsync(args))
@@ -19,13 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddSingleton<DomainEventsInterceptor>();
-builder.Services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, UserObserver>();
 
 builder.Services.AddDbContext<WebAppDbContext>((sp, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-    options.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
 });
 
 // Register repositories

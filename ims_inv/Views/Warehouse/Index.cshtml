@@ -1,4 +1,5 @@
-@model IEnumerable<ims_inv.Models.Warehouse>
+@using X.PagedList.Mvc.Core;
+@model X.PagedList.IPagedList<Warehouse>
 @{
     ViewData["Title"] = "Warehouse Management";
     ViewData["ActivePage"] = "Warehouse";
@@ -72,6 +73,13 @@
                     }
                 </tbody>
             </table>
+            @Html.PagedListPager(Model, page => Url.Action("Index", new { page }),
+                new PagedListRenderOptions
+                {
+                    LiElementClasses = new string[] { "page-item" },
+                    PageClasses = new string[] { "page-link" },
+                    UlElementClasses = new string[] { "pagination" }
+                })
         </div>
     </div>
 </div>

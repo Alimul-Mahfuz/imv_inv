@@ -1,6 +1,6 @@
+using ims_inv.Data;
 using Microsoft.EntityFrameworkCore;
 using Spectre.Console;
-using ims_inv.Data;
 
 namespace ims_inv.Commands
 {
@@ -72,7 +72,7 @@ namespace ims_inv.Commands
             cliBuilder.ConfigureServices((context, services) =>
             {
                 services.AddDbContext<WebAppDbContext>(options =>
-                    options.UseSqlite(context.Configuration.GetConnectionString("DefaultConnection")));
+                    options.UseNpgsql(context.Configuration.GetConnectionString("DefaultConnection")));
                 services.AddTransient<CreateAdminUserCommand>();
             });
 

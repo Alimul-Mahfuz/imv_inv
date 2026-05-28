@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace ims_inv.Models
@@ -17,7 +16,7 @@ namespace ims_inv.Models
         [Required]
         public string Type { get; set; } // weight, count, volume
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
     public class UnitViewModel

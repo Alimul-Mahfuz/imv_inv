@@ -99,20 +99,13 @@ namespace ims_inv.Services
             if (toUnit == null)
                 throw new InvalidOperationException($"To Unit with ID {toUnitId} not found");
 
-            var existing = await _db.UnitConversions
-                .FirstOrDefaultAsync(uc => uc.ProductId == productId && uc.FromUnitId == fromUnitId && uc.ToUnitId == toUnitId);
-
-            if (existing != null)
-                throw new InvalidOperationException(
-                    $"Conversion from {fromUnit.Name} to {toUnit.Name} already exists for product {product.Name}");
-
             var conversion = new UnitConversion
             {
                 ProductId = productId,
                 FromUnitId = fromUnitId,
                 ToUnitId = toUnitId,
                 ConversionFactor = factor,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             _db.UnitConversions.Add(conversion);

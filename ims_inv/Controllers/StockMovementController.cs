@@ -93,6 +93,7 @@ namespace ims_inv.Controllers
                     ReferenceNumber = stockMovementView.ReferenceNumber,
                     Reason = stockMovementView.Reason,
                     Notes = stockMovementView.Notes,
+                    CreatedAt = DateTime.UtcNow,
                 };
 
                 // Update inventory
@@ -103,8 +104,8 @@ namespace ims_inv.Controllers
                     {
                         ProductId = stockMovementView.ProductId,
                         Quantity = (int)quantityInBaseUnit,
-                        LastCountedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now,
+                        LastCountedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
                     };
                     await _db.Inventories.AddAsync(inventoryEntry);
                 }
@@ -115,8 +116,8 @@ namespace ims_inv.Controllers
                     else if (stockMovementView.MovementType == "OUT")
                         inventory.Quantity -= (int)quantityInBaseUnit;
 
-                    inventory.LastCountedAt = DateTime.Now;
-                    inventory.UpdatedAt = DateTime.Now;
+                    inventory.LastCountedAt = DateTime.UtcNow;
+                    inventory.UpdatedAt = DateTime.UtcNow;
                     _db.Inventories.Update(inventory);
                 }
 

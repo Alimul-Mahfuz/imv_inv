@@ -1,9 +1,9 @@
+using ims_inv.Data;
+using ims_inv.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using ims_inv.Data;
-using ims_inv.Models;
 
 namespace ims_inv.Controllers
 {
@@ -23,9 +23,9 @@ namespace ims_inv.Controllers
         public async Task<IActionResult> CreateOrEdit(int id = 0)
         {
             ViewData["ActivePage"] = "Category";
-            
+
             var categories = await _dbContext.Categories
-                .Where(c => c.Id != id) // Prevent self-parenting
+                .Where(c => c.Id != id)
                 .ToListAsync();
             ViewBag.ParentId = new SelectList(categories, "Id", "Name");
 
@@ -66,7 +66,8 @@ namespace ims_inv.Controllers
                 var category = new Category
                 {
                     Name = model.Name,
-                    ParentId = model.ParentId
+                    ParentId = model.ParentId,
+                    CreatedAt = DateTime.UtcNow
                 };
                 _dbContext.Add(category);
             }

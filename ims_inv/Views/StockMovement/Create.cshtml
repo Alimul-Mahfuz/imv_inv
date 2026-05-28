@@ -59,7 +59,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="EntryUnitId" class="form-label">Unit</label>
-                            <select id="EntryUnitId" name="EntryUnitId" class="form-select" onchange="convertQuantity()" disabled>
+                            <select id="EntryUnitId" name="EntryUnitId" class="form-select" onchange="convertQuantity()" asp-items="ViewBag.units">
                                 <option value="">-- Select Unit --</option>
                             </select>
                             <small class="text-muted mt-1 d-block" id="baseUnitInfo">Select a product first</small>
@@ -183,14 +183,16 @@
             })
     }
 
-    function convertQuantity() {
+     function convertQuantity() {
         const quantity = parseFloat(document.getElementById('Quantity').value) || 0;
         const productId = document.getElementById('ProductId').value;
         const entryUnitId = document.getElementById('EntryUnitId').value;
+
         const entryUnit = document.getElementById('entryUnit');
         const conversionInfo = document.getElementById('conversionFactor');
         const baseUnitPreview = document.getElementById('baseUnitPreview');
         const entryUnitLabel = document.getElementById('entryUnitLabel');
+        const productBaseUnit = document.getElementById('productBaseUnit');
 
         if (!productId || !entryUnitId || quantity <= 0) {
             baseUnitPreview.textContent = '-';
@@ -202,15 +204,29 @@
         // Get selected unit name
         const unitOption = document.querySelector(`#EntryUnitId option[value="${entryUnitId}"]`);
         const unitName = unitOption ? unitOption.textContent : 'Unknown';
+
         entryUnit.textContent = unitName;
         entryUnitLabel.textContent = `(in ${unitName})`;
 
-        // Call API to convert
+        // Get base unit name from UI
+        const baseUnitName = productBaseUnit.textContent.trim();
+
+        // If selected unit IS the base unit
+        if (unitName === baseUnitName) {
+            baseUnitPreview.textContent = `${quantity.toFixed(2)} ${baseUnitName}`;
+            conversionInfo.textContent = `No conversion required`;
+            return;
+        }
+
+        // Otherwise call conversion API
         fetch(`/api/products/${productId}/convert?fromUnitId=${entryUnitId}&quantity=${quantity}`)
             .then(r => r.json())
             .then(data => {
-                baseUnitPreview.textContent = `${data.convertedQuantity.toFixed(2)} ${data.baseUnitName}`;
-                conversionInfo.textContent = `1 ${unitName} = ${data.conversionFactor.toFixed(4)} ${data.baseUnitName}`;
+                baseUnitPreview.textContent =
+                    `${data.convertedQuantity.toFixed(2)} ${data.baseUnitName}`;
+
+                conversionInfo.textContent =
+                    `1 ${unitName} = ${data.conversionFactor.toFixed(4)} ${data.baseUnitName}`;
             })
             .catch(e => {
                 console.error('Error converting:', e);

@@ -1,8 +1,8 @@
+using ims_inv.Data;
+using ims_inv.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using ims_inv.Data;
-using ims_inv.Models;
 
 namespace ims_inv.Controllers
 {
@@ -84,7 +84,7 @@ namespace ims_inv.Controllers
                     CategoryId = model.CategoryId,
                     SupplierId = model.SupplierId,
                     BaseUnitId = model.BaseUnitId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
 
                 };
 

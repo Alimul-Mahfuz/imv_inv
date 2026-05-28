@@ -50,7 +50,7 @@ namespace ims_inv.Models
         /// </summary>
         public int? UserId { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Foreign Keys
         [ForeignKey("ProductId")]
@@ -74,7 +74,7 @@ namespace ims_inv.Models
         public int Quantity { get; set; }
         public string ReferenceNumber { get; set; }
         public string Reason { get; set; }
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
         public int? UserId { get; set; }
         public string UserName { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -111,7 +111,7 @@ namespace ims_inv.Models
         [Required]
         public string Reason { get; set; }
 
-        public string Notes { get; set; }
+        public string? Notes { get; set; } = string.Empty;
 
         // For display purposes
         public string? ProductName { get; set; }

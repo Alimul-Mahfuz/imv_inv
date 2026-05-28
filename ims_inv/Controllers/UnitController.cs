@@ -1,8 +1,8 @@
+using ims_inv.Data;
+using ims_inv.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ims_inv.Data;
-using ims_inv.Models;
 
 namespace ims_inv.Controllers
 {
@@ -57,7 +57,9 @@ namespace ims_inv.Controllers
                 {
                     Name = model.Name,
                     Symbol = model.Symbol,
-                    Type = model.Type
+                    Type = model.Type,
+                    CreatedAt = DateTime.UtcNow
+
                 };
                 _dbContext.Add(unit);
             }

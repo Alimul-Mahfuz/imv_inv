@@ -12,7 +12,7 @@ namespace ims_inv.Models
         public int CategoryId { get; set; }
         public int SupplierId { get; set; }
         public int BaseUnitId { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public Category Category { get; set; }
         public Supplier Supplier { get; set; }
