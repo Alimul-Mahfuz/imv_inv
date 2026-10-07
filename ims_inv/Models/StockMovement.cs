@@ -21,29 +21,34 @@ namespace ims_inv.Models
         /// IN = stock received, OUT = stock issued
         /// </summary>
         [Required]
-        public string MovementType { get; set; }  // "IN" or "OUT"
+        [StringLength(10)]
+        public string MovementType { get; set; } = string.Empty; // "IN" or "OUT"
 
         /// <summary>
-        /// Quantity moved
+        /// Quantity moved in base unit
         /// </summary>
         [Required]
-        public int Quantity { get; set; }
+        [Column(TypeName = "decimal(18,4)")]
+        public decimal Quantity { get; set; }
 
         /// <summary>
         /// Reference number (PO number, SO number, etc.)
         /// </summary>
-        public string ReferenceNumber { get; set; }
+        [StringLength(50)]
+        public string? ReferenceNumber { get; set; }
 
         /// <summary>
         /// Reason for movement (Purchase, Sales, Damage, Adjustment, etc.)
         /// </summary>
         [Required]
-        public string Reason { get; set; }
+        [StringLength(100)]
+        public string Reason { get; set; } = string.Empty;
 
         /// <summary>
         /// Additional notes
         /// </summary>
-        public string Notes { get; set; }
+        [StringLength(500)]
+        public string? Notes { get; set; }
 
         /// <summary>
         /// User who recorded the movement
@@ -54,51 +59,52 @@ namespace ims_inv.Models
 
         // Foreign Keys
         [ForeignKey("ProductId")]
-        public virtual Product Product { get; set; }
+        public virtual Product? Product { get; set; }
 
         [ForeignKey("WarehouseId")]
-        public virtual Warehouse Warehouse { get; set; }
+        public virtual Warehouse? Warehouse { get; set; }
 
         [ForeignKey("UserId")]
-        public virtual User User { get; set; }
+        public virtual User? User { get; set; }
     }
 
     public class StockMovementViewModel
     {
         public int Id { get; set; }
         public int ProductId { get; set; }
-        public string ProductName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
         public int WarehouseId { get; set; }
-        public string WarehouseName { get; set; }
-        public string MovementType { get; set; }
-        public int Quantity { get; set; }
-        public string ReferenceNumber { get; set; }
-        public string Reason { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
+        public string MovementType { get; set; } = string.Empty;
+        public decimal Quantity { get; set; }
+        public string? ReferenceNumber { get; set; }
+        public string Reason { get; set; } = string.Empty;
         public string? Notes { get; set; }
         public int? UserId { get; set; }
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
     /// <summary>
-    /// For creating/editing stock movements
+    /// For creating stock movements
     /// </summary>
     public class CreateStockMovementViewModel
     {
-        [Required]
+        [Required(ErrorMessage = "Product is required")]
         public int ProductId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Warehouse is required")]
         public int WarehouseId { get; set; }
 
-        [Required]
-        public string MovementType { get; set; }  // "IN" or "OUT"
+        [Required(ErrorMessage = "Movement type is required")]
+        [RegularExpression("^(IN|OUT)$", ErrorMessage = "Movement type must be 'IN' or 'OUT'")]
+        public string MovementType { get; set; } = "IN"; // "IN" or "OUT"
 
         /// <summary>
         /// Quantity entered by user (in selected unit)
         /// </summary>
-        [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Quantity must be greater than 0")]
+        [Required(ErrorMessage = "Quantity is required")]
+        [Range(0.0001, 999999999.9999, ErrorMessage = "Quantity must be greater than 0")]
         public decimal Quantity { get; set; }
 
         /// <summary>
@@ -106,17 +112,20 @@ namespace ims_inv.Models
         /// </summary>
         public int? EntryUnitId { get; set; }
 
-        public string ReferenceNumber { get; set; }
+        [StringLength(50)]
+        public string? ReferenceNumber { get; set; }
 
-        [Required]
-        public string Reason { get; set; }
+        [Required(ErrorMessage = "Reason is required")]
+        [StringLength(100)]
+        public string Reason { get; set; } = string.Empty;
 
-        public string? Notes { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? Notes { get; set; }
 
         // For display purposes
         public string? ProductName { get; set; }
         public string? ProductBaseUnitName { get; set; }
         public int ProductBaseUnitId { get; set; }
-        public decimal ConvertedQuantity { get; set; }  // Quantity in base unit
+        public decimal ConvertedQuantity { get; set; } // Quantity in base unit
     }
 }

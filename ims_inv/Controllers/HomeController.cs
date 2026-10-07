@@ -1,13 +1,21 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 using ims_inv.Models;
+using ims_inv.Services;
 
 namespace ims_inv.Controllers
 {
     [Authorize]
     public class HomeController : Controller
     {
+        private readonly IDashboardService _dashboardService;
+
+        public HomeController(IDashboardService dashboardService)
+        {
+            _dashboardService = dashboardService;
+        }
+
         public IActionResult Index()
         {
             ViewData["ActivePage"] = "Dashboard";

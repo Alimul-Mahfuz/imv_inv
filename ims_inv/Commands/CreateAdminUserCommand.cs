@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Spectre.Console;
-using ims_inv.Data;
-using ims_inv.Models;
+using ims_inv.Repositories;
+using ims_inv.Services;
 
 namespace ims_inv.Commands
 {
@@ -12,11 +10,13 @@ namespace ims_inv.Commands
     /// </summary>
     public class CreateAdminUserCommand
     {
-        private readonly WebAppDbContext _context;
+        private readonly IAuthService _authService;
+        private readonly IUserRepository _userRepository;
 
-        public CreateAdminUserCommand(WebAppDbContext context)
+        public CreateAdminUserCommand(IAuthService authService, IUserRepository userRepository)
         {
-            _context = context;
+            _authService = authService;
+            _userRepository = userRepository;
         }
 
         public async Task ExecuteAsync()
@@ -29,18 +29,7 @@ namespace ims_inv.Commands
             var email = await GetEmail(cts.Token);
             var password = GetPassword();
 
-            var hasher = new PasswordHasher<User>();
-            var hashedPassword = hasher.HashPassword(new User(), password);
-
-            var user = new User
-            {
-                Name = name,
-                Email = email,
-                Password = hashedPassword
-            };
-
-            await _context.Users.AddAsync(user, cts.Token);
-            await _context.SaveChangesAsync(cts.Token);
+            var user = await _authService.CreateAdminUserAsync(name, email, password);
 
             DisplaySuccess(name, email, user.Id);
         }
@@ -73,8 +62,8 @@ namespace ims_inv.Commands
                 email = AnsiConsole.Ask<string>("[bold green]Admin Email:[/]");
             }
 
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
-            if (existingUser != null)
+            var isTaken = await _userRepository.IsEmailTakenAsync(email, cancellationToken: cancellationToken);
+            if (isTaken)
             {
                 AnsiConsole.MarkupLine("[bold red]✗ User with this email already exists![/]");
                 throw new InvalidOperationException("User with this email already exists");

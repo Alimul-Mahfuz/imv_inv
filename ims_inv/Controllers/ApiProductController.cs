@@ -1,7 +1,5 @@
-using ims_inv.Data;
-using ims_inv.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using ims_inv.Services;
 
 namespace ims_inv.Controllers
 {
@@ -9,12 +7,12 @@ namespace ims_inv.Controllers
     [Route("api/products")]
     public class ApiProductController : ControllerBase
     {
-        private readonly WebAppDbContext _db;
-        private readonly UnitConversionService _unitConversionService;
+        private readonly IProductService _productService;
+        private readonly IUnitConversionService _unitConversionService;
 
-        public ApiProductController(WebAppDbContext db, UnitConversionService unitConversionService)
+        public ApiProductController(IProductService productService, IUnitConversionService unitConversionService)
         {
-            _db = db;
+            _productService = productService;
             _unitConversionService = unitConversionService;
         }
 
@@ -24,10 +22,7 @@ namespace ims_inv.Controllers
         [HttpGet("{productId}")]
         public async Task<IActionResult> GetProduct(int productId)
         {
-            var product = await _db.Products
-                .Include(p => p.Unit)
-                .FirstOrDefaultAsync(p => p.Id == productId);
-
+            var product = await _productService.GetProductByIdAsync(productId);
             if (product == null)
                 return NotFound(new { message = "Product not found" });
 
@@ -42,25 +37,18 @@ namespace ims_inv.Controllers
 
         /// <summary>
         /// Convert quantity from entry unit to base unit for a product
-        /// The UnitConversions table stores: FromUnitId (base) -> ToUnitId (other units) with factor
-        /// So we invert the factor when converting FROM the other unit TO base unit
-        /// Example: 1 Kg = 1000 Grams (factor 1000), so 1 Gram = 1/1000 Kg = 0.001 Kg
         /// </summary>
         [HttpGet("{productId}/convert")]
         public async Task<IActionResult> ConvertQuantity(int productId, int fromUnitId, decimal quantity)
         {
             try
             {
-                var product = await _db.Products
-                    .Include(p => p.Unit)
-                    .FirstOrDefaultAsync(p => p.Id == productId);
-
+                var product = await _productService.GetProductByIdAsync(productId);
                 if (product == null)
                     return NotFound(new { message = "Product not found" });
 
                 if (fromUnitId == product.BaseUnitId)
                 {
-                    // No conversion needed
                     return Ok(new
                     {
                         quantity = quantity,
@@ -72,23 +60,8 @@ namespace ims_inv.Controllers
                     });
                 }
 
-                // Get conversion factor from UnitConversions table
-                var conversion = await _db.UnitConversions
-                    .FirstOrDefaultAsync(u => u.ProductId == productId &&
-                                             u.FromUnitId == product.BaseUnitId &&
-                                             u.ToUnitId == fromUnitId);
-
-                if (conversion == null)
-                {
-                    return BadRequest(new
-                    {
-                        message = $"No conversion defined between unit {fromUnitId} and base unit {product.BaseUnitId} for this product"
-                    });
-                }
-
-                // Invert the factor: if 1 Kg = 1000 Grams, then 1 Gram = 1/1000 Kg = 0.001 Kg
-                decimal invertedFactor = conversion.ConversionFactor == 0 ? 0 : 1m / conversion.ConversionFactor;
-                var convertedQuantity = quantity * invertedFactor;
+                var convertedQuantity = await _unitConversionService.ConvertToBaseUnitAsync(productId, quantity, fromUnitId);
+                var factor = await _unitConversionService.GetConversionFactorAsync(productId, fromUnitId, product.BaseUnitId);
 
                 return Ok(new
                 {
@@ -96,7 +69,7 @@ namespace ims_inv.Controllers
                     fromUnitId = fromUnitId,
                     toUnitId = product.BaseUnitId,
                     convertedQuantity = convertedQuantity,
-                    conversionFactor = invertedFactor,
+                    conversionFactor = factor ?? 1m,
                     baseUnitName = product.Unit?.Name ?? "Unknown"
                 });
             }

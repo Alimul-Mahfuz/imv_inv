@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ims_inv.Services
 {
 
-    public class UnitConversionService
+    public class UnitConversionService : IUnitConversionService
     {
         private readonly WebAppDbContext _db;
 

@@ -142,9 +142,10 @@ namespace ims_inv.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    ReorderLevel = table.Column<int>(type: "INTEGER", nullable: true),
-                    ReorderQuantity = table.Column<int>(type: "INTEGER", nullable: true),
+                    WarehouseId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Quantity = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    ReorderLevel = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
+                    ReorderQuantity = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
                     LastCountedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
@@ -158,6 +159,12 @@ namespace ims_inv.Migrations
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Inventories_Warehouses_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -169,7 +176,7 @@ namespace ims_inv.Migrations
                     ProductId = table.Column<int>(type: "INTEGER", nullable: false),
                     WarehouseId = table.Column<int>(type: "INTEGER", nullable: false),
                     MovementType = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    Quantity = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
                     ReferenceNumber = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
                     Reason = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
@@ -208,7 +215,7 @@ namespace ims_inv.Migrations
                     ProductId = table.Column<int>(type: "INTEGER", nullable: false),
                     FromUnitId = table.Column<int>(type: "INTEGER", nullable: false),
                     ToUnitId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ConversionFactor = table.Column<decimal>(type: "TEXT", nullable: false),
+                    ConversionFactor = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
@@ -246,9 +253,14 @@ namespace ims_inv.Migrations
                 column: "ParentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Inventory_ProductId",
+                name: "IX_Inventories_WarehouseId",
                 table: "Inventories",
-                column: "ProductId",
+                column: "WarehouseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Inventory_Product_Warehouse",
+                table: "Inventories",
+                columns: new[] { "ProductId", "WarehouseId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(

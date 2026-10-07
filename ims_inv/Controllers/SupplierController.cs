@@ -1,18 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ims_inv.Data;
 using ims_inv.Models;
+using ims_inv.Services;
 
 namespace ims_inv.Controllers
 {
     [Authorize]
-    public class SupplierController(WebAppDbContext _dbContext) : Controller
+    public class SupplierController : Controller
     {
+        private readonly ISupplierService _supplierService;
+
+        public SupplierController(ISupplierService supplierService)
+        {
+            _supplierService = supplierService;
+        }
+
         public async Task<IActionResult> Index()
         {
             ViewData["ActivePage"] = "Supplier";
-            var suppliers = await _dbContext.Suppliers.ToListAsync();
+            var suppliers = await _supplierService.GetAllSuppliersAsync();
             return View(suppliers);
         }
 
@@ -25,22 +31,11 @@ namespace ims_inv.Controllers
                 return View(new SupplierViewModel());
             }
 
-            var supplier = await _dbContext.Suppliers.FindAsync(id);
-            if (supplier == null)
+            var viewModel = await _supplierService.GetSupplierViewModelAsync(id);
+            if (viewModel == null)
             {
                 return NotFound();
             }
-
-            var viewModel = new SupplierViewModel
-            {
-                Id = supplier.Id,
-                Name = supplier.Name,
-                ContactPerson = supplier.ContactPerson,
-                Address = supplier.Address,
-                Phone = supplier.Phone,
-                Email = supplier.Email,
-                IsActive = supplier.IsActive
-            };
 
             return View(viewModel);
         }
@@ -54,38 +49,13 @@ namespace ims_inv.Controllers
                 return View(model);
             }
 
-            if (model.Id == 0)
+            var (success, errorMessage, _) = await _supplierService.CreateOrUpdateSupplierAsync(model);
+            if (!success)
             {
-                var supplier = new Supplier
-                {
-                    Name = model.Name,
-                    ContactPerson = model.ContactPerson,
-                    Address = model.Address,
-                    Phone = model.Phone,
-                    Email = model.Email,
-                    IsActive = model.IsActive
-                };
-                _dbContext.Add(supplier);
-            }
-            else
-            {
-                var supplier = await _dbContext.Suppliers.FindAsync(model.Id);
-                if (supplier == null)
-                {
-                    return NotFound();
-                }
-
-                supplier.Name = model.Name;
-                supplier.ContactPerson = model.ContactPerson;
-                supplier.Address = model.Address;
-                supplier.Phone = model.Phone;
-                supplier.Email = model.Email;
-                supplier.IsActive = model.IsActive;
-
-                _dbContext.Update(supplier);
+                ModelState.AddModelError(string.Empty, errorMessage ?? "Error saving supplier.");
+                return View(model);
             }
 
-            await _dbContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -93,12 +63,7 @@ namespace ims_inv.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var supplier = await _dbContext.Suppliers.FindAsync(id);
-            if (supplier != null)
-            {
-                _dbContext.Suppliers.Remove(supplier);
-                await _dbContext.SaveChangesAsync();
-            }
+            await _supplierService.DeleteSupplierAsync(id);
             return RedirectToAction(nameof(Index));
         }
     }

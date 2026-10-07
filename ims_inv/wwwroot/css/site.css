@@ -1,7 +1,14 @@
 /* Dashboard Sidebar Styles */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 .wrapper {
     display: flex;
     width: 100%;
+    min-height: 100vh;
     align-items: stretch;
 }
 
@@ -12,11 +19,13 @@
     color: #fff;
     transition: all 0.3s ease-in-out;
     height: 100vh;
+    max-height: 100vh;
     position: sticky;
     top: 0;
     z-index: 1000;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 #sidebar .sidebar-header {
@@ -26,9 +35,11 @@
 }
 
 #sidebar ul.components {
-    padding: 20px 0;
-    flex-grow: 1;
+    padding: 15px 0 25px 0;
+    flex: 1 1 auto;
     overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 0;
     scrollbar-width: thin;
     scrollbar-color: #495057 #343a40;
 }
@@ -44,7 +55,7 @@
 
 #sidebar ul.components::-webkit-scrollbar-thumb {
     background: #495057;
-    border-radius: 10px;
+    border-radius: 4px;
 }
 
 #sidebar ul.components::-webkit-scrollbar-thumb:hover {
@@ -52,16 +63,22 @@
 }
 
 #sidebar ul p {
-    color: #fff;
-    padding: 10px;
+    color: #adb5bd;
+    padding: 10px 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0;
 }
 
 #sidebar ul li a {
     padding: 10px 20px;
-    font-size: 1.1em;
+    font-size: 1em;
     display: block;
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
+    transition: all 0.2s ease;
 }
 
 #sidebar ul li a:hover {
@@ -76,7 +93,7 @@
 
 #content {
     width: 100%;
-    padding: 20px;
+    padding: 20px 20px 0 20px;
     min-height: 100vh;
     transition: all 0.3s ease-in-out;
     background: #f8f9fa;
@@ -100,7 +117,10 @@
     #sidebar {
         margin-left: -250px;
         position: fixed;
-        height: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        top: 0;
+        left: 0;
     }
     #sidebar.active {
         margin-left: 0;
@@ -138,7 +158,11 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  margin: 0;
+}
+
+.footer {
+  background-color: transparent;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {

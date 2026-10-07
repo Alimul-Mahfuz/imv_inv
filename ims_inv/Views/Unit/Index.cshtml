@@ -1,68 +1,320 @@
-@model IEnumerable<ims_inv.Models.Unit>
+@model ims_inv.Models.UnitManagementViewModel
 @{
-    ViewData["Title"] = "Unit Management";
+    ViewData["Title"] = "Unit Management & Conversions";
     ViewData["ActivePage"] = "Unit";
 }
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Unit Management</h1>
-    <a asp-action="CreateOrEdit" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i> Add New Unit
-    </a>
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">Unit & Conversion Management</h1>
+        <p class="text-muted small mb-0">Manage measurement units and configure product-specific conversion ratios.</p>
+    </div>
+    <div class="btn-group shadow-sm">
+        <a asp-action="CreateOrEdit" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Add Unit
+        </a>
+        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addConversionModal">
+            <i class="bi bi-arrow-left-right me-1"></i> Add Conversion
+        </button>
+    </div>
 </div>
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Units</li>
+    <li class="breadcrumb-item active" aria-current="page">Units & Conversions</li>
   </ol>
 </nav>
 
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Unit List</h6>
+<!-- Alert Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover" id="unitTable" width="100%" cellspacing="0">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Unit Name</th>
-                        <th>Symbol</th>
-                        <th>Type</th>
-                        <th>Created At</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        <tr>
-                            <td>@item.Id</td>
-                            <td>@item.Name</td>
-                            <td><span class="badge bg-info text-dark">@item.Symbol</span></td>
-                            <td>@item.Type</td>
-                            <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a asp-action="CreateOrEdit" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white"><i class="bi bi-pencil-square"></i></a>
-                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this unit?');" style="display:inline;">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center">No units found.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Nav Tabs -->
+<ul class="nav nav-tabs mb-4" id="unitTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="units-tab" data-bs-toggle="tab" data-bs-target="#units-pane" type="button" role="tab" aria-controls="units-pane" aria-selected="true">
+            <i class="bi bi-rulers me-2"></i>Measurement Units <span class="badge bg-secondary ms-1">@Model.Units.Count</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="conversions-tab" data-bs-toggle="tab" data-bs-target="#conversions-pane" type="button" role="tab" aria-controls="conversions-pane" aria-selected="false">
+            <i class="bi bi-arrow-left-right me-2"></i>Unit Conversions <span class="badge bg-success ms-1">@Model.Conversions.Count</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="unitTabsContent">
+    <!-- TAB 1: UNITS -->
+    <div class="tab-pane fade show active" id="units-pane" role="tabpanel" aria-labelledby="units-tab">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">All Measurement Units</h6>
+                <a asp-action="CreateOrEdit" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-circle me-1"></i> New Unit
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="unitTable" width="100%" cellspacing="0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 80px;">ID</th>
+                                <th>Unit Name</th>
+                                <th>Symbol</th>
+                                <th>Category / Type</th>
+                                <th>Created Date</th>
+                                <th style="width: 130px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Units.Any())
+                            {
+                                @foreach (var item in Model.Units)
+                                {
+                                    <tr>
+                                        <td>@item.Id</td>
+                                        <td><strong>@item.Name</strong></td>
+                                        <td><span class="badge bg-info text-dark">@item.Symbol</span></td>
+                                        <td><span class="text-capitalize">@item.Type</span></td>
+                                        <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a asp-action="CreateOrEdit" asp-route-id="@item.Id" class="btn btn-outline-info" title="Edit Unit">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a>
+                                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this unit?');" style="display:inline;">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-outline-danger" title="Delete Unit">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No units configured yet.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: UNIT CONVERSIONS -->
+    <div class="tab-pane fade" id="conversions-pane" role="tabpanel" aria-labelledby="conversions-tab">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-success">Product Unit Conversion Matrix</h6>
+                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addConversionModal">
+                    <i class="bi bi-plus-circle me-1"></i> New Conversion
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" width="100%" cellspacing="0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Base Unit (From)</th>
+                                <th>Target Unit (To)</th>
+                                <th>Conversion Factor</th>
+                                <th>Formula Example</th>
+                                <th style="width: 130px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Conversions.Any())
+                            {
+                                @foreach (var conv in Model.Conversions)
+                                {
+                                    var formula = $"1 {conv.FromUnit?.Symbol} = {conv.ConversionFactor:G29} {conv.ToUnit?.Symbol}";
+                                    <tr>
+                                        <td>
+                                            <strong>@(conv.Product?.Name ?? "N/A")</strong>
+                                            <br />
+                                            <small class="text-muted">SKU: @(conv.Product?.SKU ?? "-")</small>
+                                        </td>
+                                        <td>
+                                            <strong>@conv.FromUnit?.Name</strong>
+                                            <span class="badge bg-primary ms-1">@conv.FromUnit?.Symbol</span>
+                                        </td>
+                                        <td>
+                                            <strong>@conv.ToUnit?.Name</strong>
+                                            <span class="badge bg-secondary ms-1">@conv.ToUnit?.Symbol</span>
+                                        </td>
+                                        <td>
+                                            <code class="fs-6">@conv.ConversionFactor.ToString("G29")</code>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted"><i class="bi bi-calculator me-1"></i>@formula</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a asp-controller="UnitConversion" asp-action="Edit" asp-route-conversionId="@conv.Id" asp-route-productId="@conv.ProductId" class="btn btn-outline-warning" title="Edit Conversion">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <form asp-action="DeleteConversion" asp-route-conversionId="@conv.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this conversion?');" style="display:inline;">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-outline-danger" title="Delete Conversion">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        No unit conversions configured yet.
+                                        <br />
+                                        <button type="button" class="btn btn-sm btn-link" data-bs-toggle="modal" data-bs-target="#addConversionModal">
+                                            Configure the first conversion →
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Modal: Add Unit Conversion -->
+<div class="modal fade" id="addConversionModal" tabindex="-1" aria-labelledby="addConversionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addConversionModalLabel">
+                    <i class="bi bi-arrow-left-right me-2"></i>Configure Unit Conversion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="CreateConversion" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modalProductId" class="form-label fw-bold">Select Product</label>
+                        <select id="modalProductId" name="ProductId" class="form-select" required onchange="onModalProductChange()">
+                            <option value="">-- Choose Product --</option>
+                            @foreach (var prod in Model.Products)
+                            {
+                                <option value="@prod.Id" data-baseunit-id="@prod.BaseUnitId" data-baseunit-name="@(prod.Unit?.Name ?? "Base Unit")" data-baseunit-symbol="@(prod.Unit?.Symbol ?? "")">
+                                    @prod.Name (@(prod.Unit?.Symbol ?? "Unit"))
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3 p-3 bg-light rounded border">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted small">Product's Base Unit (From):</span>
+                            <span id="modalBaseUnitBadge" class="badge bg-primary fs-6">Select Product</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modalTargetUnitId" class="form-label fw-bold">Target Unit (To)</label>
+                        <select id="modalTargetUnitId" name="TargetUnitId" class="form-select" required onchange="updateModalFormulaPreview()">
+                            <option value="">-- Choose Target Unit --</option>
+                            @foreach (var unit in Model.Units)
+                            {
+                                <option value="@unit.Id" data-symbol="@unit.Symbol" data-name="@unit.Name">
+                                    @unit.Name (@unit.Symbol) - @unit.Type
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modalConversionFactor" class="form-label fw-bold">Conversion Factor</label>
+                        <input type="number" step="0.0001" min="0.0001" id="modalConversionFactor" name="ConversionFactor" class="form-control" placeholder="e.g. 1000 for 1kg = 1000g" required oninput="updateModalFormulaPreview()" />
+                        <small class="text-muted">How many target units are in 1 base unit.</small>
+                    </div>
+
+                    <div class="p-3 bg-light rounded border">
+                        <strong class="small text-muted d-block mb-1">Formula Preview:</strong>
+                        <div id="modalFormulaPreview" class="fw-bold text-success">-</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="bi bi-check-circle me-1"></i> Save Conversion
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function onModalProductChange() {
+        const productSelect = document.getElementById('modalProductId');
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        const baseUnitBadge = document.getElementById('modalBaseUnitBadge');
+
+        if (!productSelect.value) {
+            baseUnitBadge.textContent = 'Select Product';
+            baseUnitBadge.className = 'badge bg-secondary fs-6';
+            updateModalFormulaPreview();
+            return;
+        }
+
+        const baseUnitName = selectedOption.getAttribute('data-baseunit-name');
+        const baseUnitSymbol = selectedOption.getAttribute('data-baseunit-symbol');
+
+        baseUnitBadge.textContent = `${baseUnitName} (${baseUnitSymbol})`;
+        baseUnitBadge.className = 'badge bg-primary fs-6';
+        updateModalFormulaPreview();
+    }
+
+    function updateModalFormulaPreview() {
+        const productSelect = document.getElementById('modalProductId');
+        const targetUnitSelect = document.getElementById('modalTargetUnitId');
+        const factorInput = document.getElementById('modalConversionFactor');
+        const preview = document.getElementById('modalFormulaPreview');
+
+        const productOption = productSelect.options[productSelect.selectedIndex];
+        const targetOption = targetUnitSelect.options[targetUnitSelect.selectedIndex];
+        const factor = parseFloat(factorInput.value);
+
+        if (!productSelect.value || !targetUnitSelect.value || isNaN(factor) || factor <= 0) {
+            preview.textContent = 'Complete the fields above to see conversion preview.';
+            preview.className = 'text-muted small';
+            return;
+        }
+
+        const baseSymbol = productOption.getAttribute('data-baseunit-symbol') || 'BaseUnit';
+        const targetSymbol = targetOption.getAttribute('data-symbol') || targetOption.text;
+
+        preview.innerHTML = `<i class="bi bi-arrow-right-circle me-1"></i> 1 ${baseSymbol} = <strong>${factor}</strong> ${targetSymbol}`;
+        preview.className = 'fw-bold text-success';
+    }
+</script>

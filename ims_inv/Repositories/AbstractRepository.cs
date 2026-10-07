@@ -21,6 +21,14 @@ namespace ims_inv.Repositories
         }
 
         /// <summary>
+        /// Gets an IQueryable for querying the entity set.
+        /// </summary>
+        public virtual IQueryable<T> Query()
+        {
+            return _dbSet.AsQueryable();
+        }
+
+        /// <summary>
         /// Gets an entity by its primary key.
         /// </summary>
         public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)

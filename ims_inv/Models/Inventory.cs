@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace ims_inv.Models
 {
     /// <summary>
-    /// Inventory tracks the quantity of products
+    /// Inventory tracks the quantity of products per warehouse
     /// </summary>
     public class Inventory
     {
@@ -14,21 +14,27 @@ namespace ims_inv.Models
         [Required]
         public int ProductId { get; set; }
 
-        /// <summary>
-        /// Current quantity in stock
-        /// </summary>
         [Required]
-        public int Quantity { get; set; }
+        public int WarehouseId { get; set; }
 
         /// <summary>
-        /// Minimum quantity to trigger reorder
+        /// Current quantity in stock in this warehouse (supports fractional units)
         /// </summary>
-        public int? ReorderLevel { get; set; }
+        [Required]
+        [Column(TypeName = "decimal(18,4)")]
+        public decimal Quantity { get; set; }
+
+        /// <summary>
+        /// Minimum quantity to trigger reorder for this warehouse
+        /// </summary>
+        [Column(TypeName = "decimal(18,4)")]
+        public decimal? ReorderLevel { get; set; }
 
         /// <summary>
         /// Suggested quantity for reordering
         /// </summary>
-        public int? ReorderQuantity { get; set; }
+        [Column(TypeName = "decimal(18,4)")]
+        public decimal? ReorderQuantity { get; set; }
 
         /// <summary>
         /// Last time inventory was counted/verified
@@ -36,21 +42,30 @@ namespace ims_inv.Models
         public DateTime? LastCountedAt { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [ConcurrencyCheck]
         public DateTime? UpdatedAt { get; set; }
 
         // Foreign Keys
         [ForeignKey("ProductId")]
-        public virtual Product Product { get; set; }
+        public virtual Product? Product { get; set; }
+
+        [ForeignKey("WarehouseId")]
+        public virtual Warehouse? Warehouse { get; set; }
     }
 
     public class InventoryViewModel
     {
         public int Id { get; set; }
         public int ProductId { get; set; }
-        public string ProductName { get; set; }
-        public int Quantity { get; set; }
-        public int? ReorderLevel { get; set; }
-        public int? ReorderQuantity { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string ProductSKU { get; set; } = string.Empty;
+        public string BaseUnitSymbol { get; set; } = string.Empty;
+        public int WarehouseId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
+        public decimal Quantity { get; set; }
+        public decimal? ReorderLevel { get; set; }
+        public decimal? ReorderQuantity { get; set; }
         public DateTime? LastCountedAt { get; set; }
     }
 }

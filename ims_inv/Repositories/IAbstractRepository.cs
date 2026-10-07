@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 namespace ims_inv.Repositories
 {
@@ -9,7 +9,12 @@ namespace ims_inv.Repositories
     public interface IAbstractRepository<T> where T : class
     {
         /// <summary>
-        /// Gets an entity by its primary key.
+        /// Gets an IQueryable for querying the entity set.
+        /// </summary>
+        IQueryable<T> Query();
+
+        /// <summary>
+        /// Gets an entity by its primary key with optional eager loading includes.
         /// </summary>
         Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 

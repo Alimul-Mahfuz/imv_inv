@@ -1,55 +1,55 @@
-using ims_inv.Data;
-using ims_inv.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using ims_inv.Models;
+using ims_inv.Services;
 
 namespace ims_inv.Controllers
 {
-    public class ProductController(WebAppDbContext _db) : Controller
+    [Authorize]
+    public class ProductController : Controller
     {
-        public async Task<IActionResult> Index()
+        private readonly IProductService _productService;
+        private readonly ICategoryService _categoryService;
+        private readonly ISupplierService _supplierService;
+        private readonly IUnitService _unitService;
+
+        public ProductController(
+            IProductService productService,
+            ICategoryService categoryService,
+            ISupplierService supplierService,
+            IUnitService unitService)
         {
-            var product = await _db.Products
-                .Include(c => c.Category)
-                .Include(s => s.Supplier)
-                .Include(u => u.Unit)
-                .ToListAsync();
-            return View(product);
+            _productService = productService;
+            _categoryService = categoryService;
+            _supplierService = supplierService;
+            _unitService = unitService;
         }
 
-        public async Task<IActionResult> CreateOrEdit(int Id = 0)
+        public async Task<IActionResult> Index()
         {
             ViewData["ActivePage"] = "Product";
-            var categories = await _db.Categories.ToListAsync();
-            var suppliers = await _db.Suppliers.ToListAsync();
-            var units = await _db.Units.ToListAsync();
-            ViewBag.CategoryId = new SelectList(categories, "Id", "Name");
-            ViewBag.SupplierId = new SelectList(suppliers, "Id", "Name");
-            ViewBag.BaseUnitId = new SelectList(units, "Id", "Name");
-            if (Id == 0)
+            var products = await _productService.GetAllProductsAsync();
+            return View(products);
+        }
+
+        public async Task<IActionResult> CreateOrEdit(int id = 0)
+        {
+            ViewData["ActivePage"] = "Product";
+            await PopulateDropDownsAsync();
+
+            if (id == 0)
             {
                 return View(new ProductViewModel());
             }
 
-            var product = _db.Products
-                .FirstOrDefault(x => x.Id == Id);
-            if (product == null)
+            var viewModel = await _productService.GetProductViewModelAsync(id);
+            if (viewModel == null)
             {
                 return NotFound();
             }
 
-            var productViewModel = new ProductViewModel
-            {
-                Id = product.Id,
-                Name = product.Name,
-                SKU = product.SKU,
-                CategoryId = product.CategoryId,
-                SupplierId = product.SupplierId,
-                BaseUnitId = product.BaseUnitId,
-            };
-
-            return View(productViewModel);
+            return View(viewModel);
         }
 
         [HttpPost]
@@ -58,68 +58,30 @@ namespace ims_inv.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var categories = await _db.Categories.ToListAsync();
-                var suppliers = await _db.Suppliers.ToListAsync();
-                var units = await _db.Units.ToListAsync();
-                ViewBag.CategoryId = new SelectList(categories, "Id", "Name");
-                ViewBag.SupplierId = new SelectList(suppliers, "Id", "Name");
-                ViewBag.BaseUnitId = new SelectList(units, "Id", "Name");
-
+                await PopulateDropDownsAsync(model.CategoryId, model.SupplierId, model.BaseUnitId);
                 return View(model);
             }
 
-            if (model.Id == 0)
+            var (success, errorMessage, _) = await _productService.CreateOrUpdateProductAsync(model);
+            if (!success)
             {
-                var isSKUExist = await _db.Products.AnyAsync(p => p.SKU == model.SKU);
-                if (isSKUExist)
-                {
-                    ModelState.AddModelError("SKU", "SKU is exists");
-                    return View(model);
-                }
-                var product = new Product
-                {
-                    Id = model.Id,
-                    SKU = model.SKU,
-                    Name = model.Name,
-                    CategoryId = model.CategoryId,
-                    SupplierId = model.SupplierId,
-                    BaseUnitId = model.BaseUnitId,
-                    CreatedAt = DateTime.UtcNow
-
-                };
-
-                await _db.Products.AddAsync(product);
-            }
-            else
-            {
-                var product = await _db.Products.Where(p => p.Id == model.Id).FirstOrDefaultAsync();
-                if (product == null)
-                {
-                    return NotFound();
-                }
-
-                var isSKUExist = await _db.Products.AnyAsync(p => p.SKU == model.SKU && p.Id != product.Id);
-                if (isSKUExist)
-                {
-                    ModelState.AddModelError("SKU", "SKU is exists");
-                    return View(model);
-                }
-
-                product.Name = model.Name;
-                product.SKU = model.SKU;
-                product.BaseUnitId = model.BaseUnitId;
-                product.CategoryId = model.CategoryId;
-                product.SupplierId = model.SupplierId;
-
-                _db.Products.Update(product);
-
-
+                ModelState.AddModelError(string.Empty, errorMessage ?? "Error saving product.");
+                await PopulateDropDownsAsync(model.CategoryId, model.SupplierId, model.BaseUnitId);
+                return View(model);
             }
 
+            return RedirectToAction(nameof(Index));
+        }
 
-            await _db.SaveChangesAsync();
+        private async Task PopulateDropDownsAsync(int? selectedCategoryId = null, int? selectedSupplierId = null, int? selectedBaseUnitId = null)
+        {
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            var suppliers = await _supplierService.GetActiveSuppliersAsync();
+            var units = await _unitService.GetAllUnitsAsync();
 
-            return RedirectToAction("Index");
+            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", selectedCategoryId);
+            ViewBag.SupplierId = new SelectList(suppliers, "Id", "Name", selectedSupplierId);
+            ViewBag.BaseUnitId = new SelectList(units, "Id", "Name", selectedBaseUnitId);
         }
     }
 }

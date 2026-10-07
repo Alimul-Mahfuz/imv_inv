@@ -28,6 +28,7 @@ namespace ims_inv.Models
         /// So: 1000 grams * 0.001 = 1 kg
         /// </summary>
         [Required]
+        [Column(TypeName = "decimal(18,4)")]
         public decimal ConversionFactor { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -35,19 +36,18 @@ namespace ims_inv.Models
 
         // Foreign Keys
         [ForeignKey("ProductId")]
-        public virtual Product Product { get; set; }
+        public virtual Product? Product { get; set; }
 
         [ForeignKey("FromUnitId")]
-        public virtual Unit FromUnit { get; set; }
+        public virtual Unit? FromUnit { get; set; }
 
         [ForeignKey("ToUnitId")]
-        public virtual Unit ToUnit { get; set; }
+        public virtual Unit? ToUnit { get; set; }
     }
 
     public class UnitConversionViewModel
     {
         public int Id { get; set; }
-
         public int ProductId { get; set; }
 
         [Required(ErrorMessage = "From Unit is required")]
@@ -64,9 +64,55 @@ namespace ims_inv.Models
         public decimal ConversionFactor { get; set; }
 
         // For display
-        public string FromUnitName { get; set; }
-        public string FromUnitSymbol { get; set; }
-        public string ToUnitName { get; set; }
-        public string ToUnitSymbol { get; set; }
+        public string FromUnitName { get; set; } = string.Empty;
+        public string FromUnitSymbol { get; set; } = string.Empty;
+        public string ToUnitName { get; set; } = string.Empty;
+        public string ToUnitSymbol { get; set; } = string.Empty;
+    }
+
+    public class ProductUnitConversionViewModel
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string ProductSKU { get; set; } = string.Empty;
+        public int BaseUnitId { get; set; }
+        public string BaseUnitName { get; set; } = string.Empty;
+        public string BaseUnitSymbol { get; set; } = string.Empty;
+        public List<UnitConversionViewModel> Conversions { get; set; } = new();
+        public List<Unit> AllUnits { get; set; } = new();
+    }
+
+    public class CreateUnitConversionViewModel
+    {
+        public int ProductId { get; set; }
+        public string? ProductName { get; set; }
+        public int BaseUnitId { get; set; }
+        public string? BaseUnitName { get; set; }
+
+        [Required(ErrorMessage = "Target unit is required")]
+        [Display(Name = "Convert To")]
+        public int TargetUnitId { get; set; }
+
+        [Required(ErrorMessage = "Conversion factor is required")]
+        [Range(0.0001, 999999.9999, ErrorMessage = "Conversion factor must be between 0.0001 and 999999.9999")]
+        [Display(Name = "Conversion Factor")]
+        public decimal ConversionFactor { get; set; }
+
+        public List<Unit> AvailableUnits { get; set; } = new();
+    }
+
+    public class EditUnitConversionViewModel
+    {
+        public int ConversionId { get; set; }
+        public int ProductId { get; set; }
+        public string FromUnitName { get; set; } = string.Empty;
+        public string FromUnitSymbol { get; set; } = string.Empty;
+        public string ToUnitName { get; set; } = string.Empty;
+        public string ToUnitSymbol { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Conversion factor is required")]
+        [Range(0.0001, 999999.9999, ErrorMessage = "Conversion factor must be between 0.0001 and 999999.9999")]
+        [Display(Name = "Conversion Factor")]
+        public decimal ConversionFactor { get; set; }
     }
 }

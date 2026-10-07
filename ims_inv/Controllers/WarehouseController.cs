@@ -1,19 +1,25 @@
-using ims_inv.Data;
-using ims_inv.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using X.PagedList.Extensions;
+using ims_inv.Models;
+using ims_inv.Services;
 
 namespace ims_inv.Controllers
 {
     [Authorize]
-    public class WarehouseController(WebAppDbContext _dbContext) : Controller
+    public class WarehouseController : Controller
     {
-        public async Task<IActionResult> Index(int page = 1)
+        private readonly IWarehouseService _warehouseService;
+
+        public WarehouseController(IWarehouseService warehouseService)
+        {
+            _warehouseService = warehouseService;
+        }
+
+        public IActionResult Index(int page = 1)
         {
             ViewData["ActivePage"] = "Warehouse";
             var pageSize = 10;
-            var warehouses = _dbContext.Warehouses.OrderByDescending(x => x.Id).ToPagedList(page, pageSize);
+            var warehouses = _warehouseService.GetPagedWarehouses(page, pageSize);
             return View(warehouses);
         }
 
@@ -26,22 +32,11 @@ namespace ims_inv.Controllers
                 return View(new WarehouseViewModel());
             }
 
-            var warehouse = await _dbContext.Warehouses.FindAsync(id);
-            if (warehouse == null)
+            var viewModel = await _warehouseService.GetWarehouseViewModelAsync(id);
+            if (viewModel == null)
             {
                 return NotFound();
             }
-
-            var viewModel = new WarehouseViewModel
-            {
-                Id = warehouse.Id,
-                Name = warehouse.Name,
-                Address = warehouse.Address,
-                Phone = warehouse.Phone,
-                Email = warehouse.Email,
-                IsActive = warehouse.IsActive,
-                Capacity = warehouse.Capacity
-            };
 
             return View(viewModel);
         }
@@ -55,38 +50,13 @@ namespace ims_inv.Controllers
                 return View(model);
             }
 
-            if (model.Id == 0)
+            var (success, errorMessage, _) = await _warehouseService.CreateOrUpdateWarehouseAsync(model);
+            if (!success)
             {
-                var warehouse = new Warehouse
-                {
-                    Name = model.Name,
-                    Address = model.Address,
-                    Phone = model.Phone,
-                    Email = model.Email,
-                    IsActive = model.IsActive,
-                    Capacity = model.Capacity
-                };
-                _dbContext.Add(warehouse);
-            }
-            else
-            {
-                var warehouse = await _dbContext.Warehouses.FindAsync(model.Id);
-                if (warehouse == null)
-                {
-                    return NotFound();
-                }
-
-                warehouse.Name = model.Name;
-                warehouse.Address = model.Address;
-                warehouse.Phone = model.Phone;
-                warehouse.Email = model.Email;
-                warehouse.IsActive = model.IsActive;
-                warehouse.Capacity = model.Capacity;
-
-                _dbContext.Update(warehouse);
+                ModelState.AddModelError(string.Empty, errorMessage ?? "Error saving warehouse.");
+                return View(model);
             }
 
-            await _dbContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -94,12 +64,7 @@ namespace ims_inv.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var warehouse = await _dbContext.Warehouses.FindAsync(id);
-            if (warehouse != null)
-            {
-                _dbContext.Warehouses.Remove(warehouse);
-                await _dbContext.SaveChangesAsync();
-            }
+            await _warehouseService.DeleteWarehouseAsync(id);
             return RedirectToAction(nameof(Index));
         }
     }

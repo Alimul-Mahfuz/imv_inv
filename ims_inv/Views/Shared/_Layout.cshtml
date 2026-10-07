@@ -68,7 +68,7 @@
             <div class="overlay"></div>
 
             <!-- Page Content -->
-            <div id="content">
+            <div id="content" class="d-flex flex-column min-vh-100">
                 <nav class="navbar navbar-expand-lg navbar-light navbar-dashboard mb-4 rounded">
                     <div class="container-fluid">
                         <button type="button" id="sidebarCollapse" class="btn btn-primary">
@@ -95,18 +95,32 @@
                     </div>
                 </nav>
 
-                <div class="container-fluid">
+                <div class="container-fluid flex-grow-1">
                     @RenderBody()
                 </div>
+
+                <footer class="footer border-top text-muted py-3 mt-4">
+                    <div class="container-fluid d-flex justify-content-between align-items-center">
+                        <span class="small">&copy; @DateTime.UtcNow.Year - IMS Inventory Management System</span>
+                        <span class="small"><a asp-controller="Home" asp-action="Privacy" class="text-muted text-decoration-none">Privacy</a></span>
+                    </div>
+                </footer>
             </div>
         </div>
     }
     else
     {
-        <div class="container">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
+        <div class="d-flex flex-column min-vh-100">
+            <div class="container flex-grow-1 py-4">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
+            </div>
+            <footer class="footer border-top text-muted py-3 mt-auto">
+                <div class="container text-center small">
+                    &copy; @DateTime.UtcNow.Year - IMS Inventory Management System - <a asp-controller="Home" asp-action="Privacy" class="text-muted text-decoration-none">Privacy</a>
+                </div>
+            </footer>
         </div>
     }
 

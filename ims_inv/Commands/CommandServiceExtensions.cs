@@ -1,4 +1,6 @@
 using ims_inv.Data;
+using ims_inv.Repositories;
+using ims_inv.Services;
 using Microsoft.EntityFrameworkCore;
 using Spectre.Console;
 
@@ -73,6 +75,8 @@ namespace ims_inv.Commands
             {
                 services.AddDbContext<WebAppDbContext>(options =>
                     options.UseSqlite(context.Configuration.GetConnectionString("DefaultConnection")));
+                services.AddScoped<IUserRepository, UserRepository>();
+                services.AddScoped<IAuthService, AuthService>();
                 services.AddTransient<CreateAdminUserCommand>();
             });
 

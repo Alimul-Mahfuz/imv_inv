@@ -1,21 +1,25 @@
-using ims_inv.Data;
-using ims_inv.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using ims_inv.Models;
+using ims_inv.Services;
 
 namespace ims_inv.Controllers
 {
     [Authorize]
-    public class CategoryController(WebAppDbContext _dbContext) : Controller
+    public class CategoryController : Controller
     {
+        private readonly ICategoryService _categoryService;
+
+        public CategoryController(ICategoryService categoryService)
+        {
+            _categoryService = categoryService;
+        }
+
         public async Task<IActionResult> Index()
         {
             ViewData["ActivePage"] = "Category";
-            var categories = await _dbContext.Categories
-                .Include(c => c.Parent)
-                .ToListAsync();
+            var categories = await _categoryService.GetAllCategoriesAsync();
             return View(categories);
         }
 
@@ -24,28 +28,19 @@ namespace ims_inv.Controllers
         {
             ViewData["ActivePage"] = "Category";
 
-            var categories = await _dbContext.Categories
-                .Where(c => c.Id != id)
-                .ToListAsync();
-            ViewBag.ParentId = new SelectList(categories, "Id", "Name");
+            var eligibleParents = await _categoryService.GetEligibleParentCategoriesAsync(id);
+            ViewBag.ParentId = new SelectList(eligibleParents, "Id", "Name");
 
             if (id == 0)
             {
                 return View(new CategoryViewModel());
             }
 
-            var category = await _dbContext.Categories.FindAsync(id);
-            if (category == null)
+            var viewModel = await _categoryService.GetCategoryViewModelAsync(id);
+            if (viewModel == null)
             {
                 return NotFound();
             }
-
-            var viewModel = new CategoryViewModel
-            {
-                Id = category.Id,
-                Name = category.Name,
-                ParentId = category.ParentId
-            };
 
             return View(viewModel);
         }
@@ -56,36 +51,20 @@ namespace ims_inv.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var categories = await _dbContext.Categories.Where(c => c.Id != model.Id).ToListAsync();
-                ViewBag.ParentId = new SelectList(categories, "Id", "Name", model.ParentId);
+                var eligibleParents = await _categoryService.GetEligibleParentCategoriesAsync(model.Id);
+                ViewBag.ParentId = new SelectList(eligibleParents, "Id", "Name", model.ParentId);
                 return View(model);
             }
 
-            if (model.Id == 0)
+            var (success, errorMessage, _) = await _categoryService.CreateOrUpdateCategoryAsync(model);
+            if (!success)
             {
-                var category = new Category
-                {
-                    Name = model.Name,
-                    ParentId = model.ParentId,
-                    CreatedAt = DateTime.UtcNow
-                };
-                _dbContext.Add(category);
-            }
-            else
-            {
-                var category = await _dbContext.Categories.FindAsync(model.Id);
-                if (category == null)
-                {
-                    return NotFound();
-                }
-
-                category.Name = model.Name;
-                category.ParentId = model.ParentId;
-
-                _dbContext.Update(category);
+                ModelState.AddModelError(string.Empty, errorMessage ?? "Error saving category.");
+                var eligibleParents = await _categoryService.GetEligibleParentCategoriesAsync(model.Id);
+                ViewBag.ParentId = new SelectList(eligibleParents, "Id", "Name", model.ParentId);
+                return View(model);
             }
 
-            await _dbContext.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -93,21 +72,12 @@ namespace ims_inv.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var category = await _dbContext.Categories
-                .Include(c => c.Children)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (category != null)
+            var (success, errorMessage) = await _categoryService.DeleteCategoryAsync(id);
+            if (!success)
             {
-                if (category.Children.Any())
-                {
-                    TempData["Error"] = "Cannot delete category that has sub-categories.";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                _dbContext.Categories.Remove(category);
-                await _dbContext.SaveChangesAsync();
+                TempData["Error"] = errorMessage ?? "Cannot delete category.";
             }
+
             return RedirectToAction(nameof(Index));
         }
     }

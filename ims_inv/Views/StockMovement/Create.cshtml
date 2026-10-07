@@ -21,6 +21,8 @@
                 <form asp-action="Update" method="post" id="stockForm">
                     @Html.AntiForgeryToken()
 
+                    <div asp-validation-summary="All" class="alert alert-danger mb-3 @(ViewData.ModelState.IsValid ? "d-none" : "")" role="alert"></div>
+
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label class="form-label d-block">Movement Type</label>

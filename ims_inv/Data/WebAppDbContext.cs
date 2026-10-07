@@ -109,11 +109,19 @@ namespace ims_inv.Data
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 
-            // Unique constraint: Each product can only have one inventory record
+            // Inventory -> Warehouse (Many-to-One)
             modelBuilder.Entity<Inventory>()
-                .HasIndex(i => i.ProductId)
+                .HasOne(i => i.Warehouse)
+                .WithMany()
+                .HasForeignKey(i => i.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            // Unique constraint: Each product can only have one inventory record per warehouse
+            modelBuilder.Entity<Inventory>()
+                .HasIndex(i => new { i.ProductId, i.WarehouseId })
                 .IsUnique()
-                .HasDatabaseName("IX_Inventory_ProductId");
+                .HasDatabaseName("IX_Inventory_Product_Warehouse");
 
             // ============================================================================
             // STOCK MOVEMENT RELATIONSHIPS
@@ -203,18 +211,31 @@ namespace ims_inv.Data
                 .IsRequired()
                 .HasMaxLength(10);
 
+            // UnitConversion constraints
+            modelBuilder.Entity<UnitConversion>()
+                .Property(uc => uc.ConversionFactor)
+                .HasPrecision(18, 4)
+                .IsRequired();
+
             // Inventory constraints
             modelBuilder.Entity<Inventory>()
                 .Property(i => i.Quantity)
+                .HasPrecision(18, 4)
                 .IsRequired();
 
             modelBuilder.Entity<Inventory>()
                 .Property(i => i.ReorderLevel)
+                .HasPrecision(18, 4)
                 .IsRequired(false);
 
             modelBuilder.Entity<Inventory>()
                 .Property(i => i.ReorderQuantity)
+                .HasPrecision(18, 4)
                 .IsRequired(false);
+
+            modelBuilder.Entity<Inventory>()
+                .Property(i => i.UpdatedAt)
+                .IsConcurrencyToken();
 
             // StockMovement constraints
             modelBuilder.Entity<StockMovement>()
@@ -224,6 +245,7 @@ namespace ims_inv.Data
 
             modelBuilder.Entity<StockMovement>()
                 .Property(sm => sm.Quantity)
+                .HasPrecision(18, 4)
                 .IsRequired();
 
             modelBuilder.Entity<StockMovement>()
