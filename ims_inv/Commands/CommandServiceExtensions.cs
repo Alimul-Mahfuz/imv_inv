@@ -72,7 +72,7 @@ namespace ims_inv.Commands
             cliBuilder.ConfigureServices((context, services) =>
             {
                 services.AddDbContext<WebAppDbContext>(options =>
-                    options.UseNpgsql(context.Configuration.GetConnectionString("DefaultConnection")));
+                    options.UseSqlite(context.Configuration.GetConnectionString("DefaultConnection")));
                 services.AddTransient<CreateAdminUserCommand>();
             });
 
