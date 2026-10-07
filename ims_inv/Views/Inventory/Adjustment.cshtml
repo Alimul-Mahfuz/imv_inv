@@ -1,0 +1,181 @@
+@model ims_inv.Models.StockAdjustmentViewModel
+@{
+    ViewData["Title"] = "Stock Adjustment";
+    ViewData["ActivePage"] = "Inventory";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Stock Adjustment & Reconciliation</h1>
+    <a asp-action="Index" class="btn btn-sm btn-secondary shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Inventory
+    </a>
+</div>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+    <li class="breadcrumb-item"><a asp-action="Index">Inventory</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Stock Adjustment</li>
+  </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Reconcile Physical Stock Count</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Adjustment" method="post" id="adjustmentForm">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="All" class="alert alert-danger mb-3 @(ViewData.ModelState.IsValid ? "d-none" : "")" role="alert"></div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="ProductId" class="form-label fw-bold">Product</label>
+                            <select asp-for="ProductId" class="form-select" asp-items="ViewBag.Products" required onchange="fetchCurrentStock()">
+                                <option value="">-- Select Product --</option>
+                            </select>
+                            <span asp-validation-for="ProductId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="WarehouseId" class="form-label fw-bold">Warehouse</label>
+                            <select asp-for="WarehouseId" class="form-select" asp-items="ViewBag.Warehouses" required onchange="fetchCurrentStock()">
+                                <option value="">-- Select Warehouse --</option>
+                            </select>
+                            <span asp-validation-for="WarehouseId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Current System Quantity</label>
+                            <input type="text" id="systemStockInput" class="form-control bg-light" value="@Model.CurrentSystemQuantity" readonly />
+                            <small class="text-muted">Recorded in database</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhysicalCount" class="form-label fw-bold">Actual Physical Count</label>
+                            <input asp-for="PhysicalCount" id="physicalCountInput" type="number" step="0.0001" min="0" class="form-control" placeholder="Enter counted quantity" required oninput="calculateDiscrepancy()" />
+                            <span asp-validation-for="PhysicalCount" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 p-3 bg-light rounded border">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-muted small">Adjustment Discrepancy:</span>
+                            <span id="discrepancyBadge" class="badge bg-secondary fs-6">0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Reason" class="form-label fw-bold">Adjustment Reason</label>
+                        <select asp-for="Reason" class="form-select" required>
+                            <option value="Physical Count Verification">Physical Count Verification</option>
+                            <option value="Damaged Goods / Expired">Damaged Goods / Expired</option>
+                            <option value="Shrinkage / Unaccounted Loss">Shrinkage / Unaccounted Loss</option>
+                            <option value="Found Inventory / Surplus">Found Inventory / Surplus</option>
+                            <option value="Audit Correction">Audit Correction</option>
+                            <option value="Data Entry Correction">Data Entry Correction</option>
+                        </select>
+                        <span asp-validation-for="Reason" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label fw-bold">Notes / Audit Remarks</label>
+                        <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Optional audit explanation or investigation reference..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger small"></span>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check2-square me-1"></i> Apply Adjustment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow mb-4 border-left-warning">
+            <div class="card-body">
+                <h5 class="text-warning"><i class="bi bi-shield-exclamation me-2"></i> How Adjustments Work</h5>
+                <ul class="small text-muted mt-3 mb-0 ps-3">
+                    <li>Entering an <strong>Actual Physical Count</strong> updates the warehouse inventory balance to match reality.</li>
+                    <li class="mt-2">If physical count is <strong>greater</strong> than system count, an automatic <strong>IN</strong> stock movement is logged for the difference.</li>
+                    <li class="mt-2">If physical count is <strong>less</strong> than system count, an automatic <strong>OUT</strong> stock movement is logged for the discrepancy.</li>
+                    <li class="mt-2">The inventory record's <code>LastCountedAt</code> timestamp is automatically updated to the current date and time.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let systemQty = @Model.CurrentSystemQuantity;
+
+        function fetchCurrentStock() {
+            const productId = document.getElementById('ProductId').value;
+            const warehouseId = document.getElementById('WarehouseId').value;
+            const systemInput = document.getElementById('systemStockInput');
+
+            if (!productId || !warehouseId) {
+                systemQty = 0;
+                systemInput.value = '0';
+                calculateDiscrepancy();
+                return;
+            }
+
+            fetch(`/Inventory/GetCurrentStock?productId=${productId}&warehouseId=${warehouseId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        systemQty = parseFloat(data.quantity) || 0;
+                        systemInput.value = `${systemQty} ${data.unitSymbol}`;
+                    } else {
+                        systemQty = 0;
+                        systemInput.value = '0';
+                    }
+                    calculateDiscrepancy();
+                })
+                .catch(() => {
+                    systemQty = 0;
+                    systemInput.value = '0';
+                    calculateDiscrepancy();
+                });
+        }
+
+        function calculateDiscrepancy() {
+            const physicalVal = parseFloat(document.getElementById('physicalCountInput').value);
+            const badge = document.getElementById('discrepancyBadge');
+
+            if (isNaN(physicalVal)) {
+                badge.textContent = '-';
+                badge.className = 'badge bg-secondary fs-6';
+                return;
+            }
+
+            const diff = physicalVal - systemQty;
+
+            if (diff > 0) {
+                badge.textContent = `+${diff.toFixed(4)} (Surplus IN)`;
+                badge.className = 'badge bg-success fs-6';
+            } else if (diff < 0) {
+                badge.textContent = `${diff.toFixed(4)} (Shortage OUT)`;
+                badge.className = 'badge bg-danger fs-6';
+            } else {
+                badge.textContent = '0.00 (Exact Match)';
+                badge.className = 'badge bg-info text-dark fs-6';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchCurrentStock();
+        });
+    </script>
+}

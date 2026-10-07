@@ -1,0 +1,106 @@
+@model ims_inv.Models.StockCardViewModel
+@{
+    ViewData["Title"] = $"Stock Card - {Model.Product?.Name}";
+    ViewData["ActivePage"] = "Inventory";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">Stock Card: @Model.Product?.Name</h1>
+        <p class="text-muted mb-0 small">SKU: <strong>@Model.Product?.SKU</strong> | Category: <strong>@(Model.Product?.Category?.Name ?? "N/A")</strong> | Base Unit: <strong>@(Model.Product?.Unit?.Name ?? "N/A") (@(Model.Product?.Unit?.Symbol))</strong></p>
+    </div>
+    <a asp-action="Index" class="btn btn-sm btn-secondary shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Inventory
+    </a>
+</div>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+    <li class="breadcrumb-item"><a asp-action="Index">Inventory</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Stock Card (@Model.Product?.Name)</li>
+  </ol>
+</nav>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+            <h6 class="m-0 font-weight-bold text-primary">Transaction Ledger & Running Balance</h6>
+            <span class="small text-muted">Current Total Stock: <strong class="text-dark">@Model.TotalQuantity.ToString("G29") @(Model.Product?.Unit?.Symbol)</strong></span>
+        </div>
+        <form method="get" asp-action="StockCard" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="productId" value="@Model.Product?.Id" />
+            <label class="form-label mb-0 small fw-bold text-muted text-nowrap">Warehouse:</label>
+            <select name="warehouseId" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">-- All Warehouses --</option>
+                @foreach (var wh in Model.Warehouses)
+                {
+                    <option value="@wh.Id" selected="@(Model.SelectedWarehouseId == wh.Id)">@wh.Name</option>
+                }
+            </select>
+            @if (Model.SelectedWarehouseId.HasValue)
+            {
+                <a asp-action="StockCard" asp-route-productId="@Model.Product?.Id" class="btn btn-sm btn-outline-secondary text-nowrap">Clear</a>
+            }
+        </form>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0" id="stockCardTable" width="100%" cellspacing="0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Warehouse</th>
+                        <th>Type</th>
+                        <th class="text-end">Qty IN</th>
+                        <th class="text-end">Qty OUT</th>
+                        <th class="text-end">Running Balance</th>
+                        <th>Reference #</th>
+                        <th>Reason / Remarks</th>
+                        <th>Recorded By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Movements != null && Model.Movements.Any())
+                    {
+                        @foreach (var item in Model.Movements)
+                        {
+                            <tr>
+                                <td class="text-nowrap small">@item.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                <td><span class="badge bg-secondary">@item.WarehouseName</span></td>
+                                <td>
+                                    @if (item.MovementType == "IN")
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-arrow-down-left me-1"></i>IN</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger"><i class="bi bi-arrow-up-right me-1"></i>OUT</span>
+                                    }
+                                </td>
+                                <td class="text-end text-success fw-bold">@(item.QuantityIn > 0 ? item.QuantityIn.ToString("G29") : "-")</td>
+                                <td class="text-end text-danger fw-bold">@(item.QuantityOut > 0 ? item.QuantityOut.ToString("G29") : "-")</td>
+                                <td class="text-end fw-bold">@item.RunningBalance.ToString("G29") <small class="text-muted">@(Model.Product?.Unit?.Symbol)</small></td>
+                                <td>@(string.IsNullOrEmpty(item.ReferenceNumber) ? "-" : item.ReferenceNumber)</td>
+                                <td>
+                                    <div>@item.Reason</div>
+                                    @if (!string.IsNullOrEmpty(item.Notes))
+                                    {
+                                        <small class="text-muted">@item.Notes</small>
+                                    }
+                                </td>
+                                <td class="small text-muted">@(item.RecordedBy ?? "System")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">No stock movement transactions recorded for this product yet.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -32,5 +32,24 @@ namespace ims_inv.Repositories
                 .Take(count)
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<List<StockMovement>> GetByProductAsync(int productId, int? warehouseId = null, CancellationToken cancellationToken = default)
+        {
+            var query = _dbSet
+                .Include(sm => sm.Product)
+                    .ThenInclude(p => p.Unit)
+                .Include(sm => sm.Warehouse)
+                .Include(sm => sm.User)
+                .Where(sm => sm.ProductId == productId);
+
+            if (warehouseId.HasValue)
+            {
+                query = query.Where(sm => sm.WarehouseId == warehouseId.Value);
+            }
+
+            return await query
+                .OrderBy(sm => sm.CreatedAt)
+                .ToListAsync(cancellationToken);
+        }
     }
 }

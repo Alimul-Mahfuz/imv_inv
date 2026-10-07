@@ -68,4 +68,91 @@ namespace ims_inv.Models
         public decimal? ReorderQuantity { get; set; }
         public DateTime? LastCountedAt { get; set; }
     }
+
+    public class StockTransferViewModel
+    {
+        [Required(ErrorMessage = "Product is required")]
+        public int ProductId { get; set; }
+
+        [Required(ErrorMessage = "Source warehouse is required")]
+        public int FromWarehouseId { get; set; }
+
+        [Required(ErrorMessage = "Destination warehouse is required")]
+        public int ToWarehouseId { get; set; }
+
+        [Required(ErrorMessage = "Quantity is required")]
+        [Range(0.0001, 999999999.9999, ErrorMessage = "Quantity must be greater than zero")]
+        public decimal Quantity { get; set; }
+
+        public int? EntryUnitId { get; set; }
+
+        [StringLength(50)]
+        public string? ReferenceNumber { get; set; }
+
+        [StringLength(500)]
+        public string? Notes { get; set; }
+    }
+
+    public class StockAdjustmentViewModel
+    {
+        [Required(ErrorMessage = "Product is required")]
+        public int ProductId { get; set; }
+
+        [Required(ErrorMessage = "Warehouse is required")]
+        public int WarehouseId { get; set; }
+
+        public decimal CurrentSystemQuantity { get; set; }
+
+        [Required(ErrorMessage = "Physical count is required")]
+        [Range(0, 999999999.9999, ErrorMessage = "Physical count cannot be negative")]
+        public decimal PhysicalCount { get; set; }
+
+        [Required(ErrorMessage = "Reason is required")]
+        [StringLength(100)]
+        public string Reason { get; set; } = "Physical Count Verification";
+
+        [StringLength(500)]
+        public string? Notes { get; set; }
+    }
+
+    public class EditReorderSettingsViewModel
+    {
+        public int Id { get; set; }
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string ProductSKU { get; set; } = string.Empty;
+        public int WarehouseId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
+        public string UnitSymbol { get; set; } = string.Empty;
+        public decimal CurrentQuantity { get; set; }
+
+        [Range(0, 999999999.9999, ErrorMessage = "Reorder level must be non-negative")]
+        public decimal? ReorderLevel { get; set; }
+
+        [Range(0, 999999999.9999, ErrorMessage = "Reorder quantity must be non-negative")]
+        public decimal? ReorderQuantity { get; set; }
+    }
+
+    public class StockCardMovementItem
+    {
+        public DateTime Date { get; set; }
+        public string MovementType { get; set; } = string.Empty;
+        public string WarehouseName { get; set; } = string.Empty;
+        public decimal QuantityIn { get; set; }
+        public decimal QuantityOut { get; set; }
+        public decimal RunningBalance { get; set; }
+        public string? ReferenceNumber { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public string? Notes { get; set; }
+        public string? RecordedBy { get; set; }
+    }
+
+    public class StockCardViewModel
+    {
+        public Product Product { get; set; } = default!;
+        public int? SelectedWarehouseId { get; set; }
+        public List<Warehouse> Warehouses { get; set; } = new();
+        public decimal TotalQuantity { get; set; }
+        public List<StockCardMovementItem> Movements { get; set; } = new();
+    }
 }

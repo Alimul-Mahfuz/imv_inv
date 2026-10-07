@@ -10,6 +10,17 @@ namespace ims_inv.Repositories
         {
         }
 
+        public async Task<Inventory?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(i => i.Product)
+                    .ThenInclude(p => p!.Unit)
+                .Include(i => i.Product)
+                    .ThenInclude(p => p!.Category)
+                .Include(i => i.Warehouse)
+                .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        }
+
         public async Task<List<Inventory>> GetAllWithProductAndWarehouseAsync(int? warehouseId = null, CancellationToken cancellationToken = default)
         {
             var query = _dbSet

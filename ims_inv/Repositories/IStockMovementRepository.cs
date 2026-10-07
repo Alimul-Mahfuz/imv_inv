@@ -6,5 +6,6 @@ namespace ims_inv.Repositories
     {
         Task<List<StockMovement>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default);
         Task<List<StockMovement>> GetRecentMovementsAsync(int count = 10, CancellationToken cancellationToken = default);
+        Task<List<StockMovement>> GetByProductAsync(int productId, int? warehouseId = null, CancellationToken cancellationToken = default);
     }
 }
